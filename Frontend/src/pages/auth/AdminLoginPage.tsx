@@ -24,7 +24,7 @@ export const AdminLoginPage: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       if (user.role === ROLES.ADMIN) {
-        navigate(ROUTES.DASHBOARD, { replace: true });
+        navigate(ROUTES.USERS, { replace: true });
       } else {
         // Non-admin user attempted login at Admin Portal
         setPortalError('Access Denied: Staff members must sign in via the User Login Portal.');

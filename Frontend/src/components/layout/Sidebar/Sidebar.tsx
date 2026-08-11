@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-    LayoutDashboard,
     Users,
     HeartHandshake,
     Boxes,
@@ -21,14 +20,13 @@ export const Sidebar: React.FC = () => {
     const { user } = useAppSelector((state) => state.auth);
 
     const allNavItems = [
-        { label: 'Dashboard', path: ROUTES.DASHBOARD, icon: LayoutDashboard, roles: [ROLES.ADMIN] },
         { label: 'User Management', path: ROUTES.USERS, icon: Users, roles: [ROLES.ADMIN] },
-        { label: 'Donation Intake', path: ROUTES.DONATIONS, icon: HeartHandshake, roles: [ROLES.ADMIN, ROLES.DONATION_CLERK] },
-        { label: 'Stock & Lots', path: ROUTES.LOTS, icon: Boxes, roles: [ROLES.ADMIN, ROLES.STOCK_MANAGER] },
-        { label: 'Distributions', path: ROUTES.DISTRIBUTIONS, icon: Truck, roles: [ROLES.ADMIN, ROLES.HANDOUT_COORDINATOR] }
+        { label: 'Donation Intake', path: ROUTES.DONATIONS, icon: HeartHandshake, roles: [ROLES.DONATION_CLERK] },
+        { label: 'Stock & Lots', path: ROUTES.LOTS, icon: Boxes, roles: [ROLES.STOCK_MANAGER] },
+        { label: 'Distributions', path: ROUTES.DISTRIBUTIONS, icon: Truck, roles: [ROLES.HANDOUT_COORDINATOR] }
     ];
 
-    const navItems = allNavItems.filter((item) => user && item.roles.includes(user.role as any));
+    const navItems = allNavItems.filter((item) => user && (item.roles as string[]).includes(user.role));
 
     return (
         <aside

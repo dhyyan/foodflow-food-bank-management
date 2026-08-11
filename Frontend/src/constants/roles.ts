@@ -17,7 +17,7 @@ export const ROLE_LABELS: Record<UserRoleType, string> = {
 export const getRoleDefaultRoute = (role?: string): string => {
   switch (role) {
     case ROLES.ADMIN:
-      return '/dashboard';
+      return '/users';
     case ROLES.DONATION_CLERK:
       return '/donations';
     case ROLES.STOCK_MANAGER:
