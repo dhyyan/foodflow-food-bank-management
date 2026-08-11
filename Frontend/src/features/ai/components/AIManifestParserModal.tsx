@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Sparkles, AlertTriangle, CheckCircle2, ShieldCheck, Plus, Trash2, RefreshCw, Upload, Camera, FileText, Image as ImageIcon, X } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { Modal } from '../../../components/common/Modal/Modal';
 import { Button } from '../../../components/common/Button/Button';
 import { Input } from '../../../components/common/Input/Input';
@@ -75,7 +76,7 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
   const [activeTab, setActiveTab] = useState<'text' | 'image'>('text');
 
   // Input states
-  const [manifestText, setManifestText] = useState(PRESET_TEXT_MANIFESTS[0].text);
+  const [manifestText, setManifestText] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string>('image/jpeg');
 
@@ -178,8 +179,11 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
           category: item.category || 'Other'
         }))
       });
+      toast.info(`AI Manifest text parsed! Extracted ${data.items?.length || 0} line item(s).`);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to parse manifest. Please check your text.');
+      const errMsg = err?.response?.data?.message || 'Failed to parse manifest. Please check your text.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setParsing(false);
     }
@@ -208,8 +212,11 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
           category: item.category || 'Other'
         }))
       });
+      toast.info(`AI Manifest photo parsed with Vision! Extracted ${data.items?.length || 0} item line(s).`);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to parse manifest image with AI vision. Please try again.');
+      const errMsg = err?.response?.data?.message || 'Failed to parse manifest image with AI vision. Please try again.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setParsing(false);
     }
@@ -271,7 +278,9 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
     // Validate that all flagged rows have been resolved
     const unconfirmed = parsedData.items.filter((i) => i.flagged || i.quantity === null || i.quantity <= 0);
     if (unconfirmed.length > 0) {
-      setError(`Please resolve quantity for item "${unconfirmed[0].item_name}" before creating donation.`);
+      const msg = `Please resolve quantity for item "${unconfirmed[0].item_name}" before creating donation.`;
+      setError(msg);
+      toast.warning(msg);
       return;
     }
 
@@ -300,15 +309,20 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
 
       const result = await dispatch(createDonation(payload));
       if (createDonation.fulfilled.match(result)) {
+        toast.success('Donation intake created successfully from AI Manifest!');
         dispatch(resetCreateSuccess());
         if (onSuccess) onSuccess();
         onClose();
         setParsedData(null);
       } else {
-        setError('Failed to create donation. Please check inputs.');
+        const errMsg = (result.payload as string) || 'Failed to create donation. Please check inputs.';
+        setError(errMsg);
+        toast.error(errMsg);
       }
     } catch (err: any) {
-      setError(err?.message || 'Error creating donation intake.');
+      const errMsg = err?.message || 'Error creating donation intake.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setSubmitting(false);
     }

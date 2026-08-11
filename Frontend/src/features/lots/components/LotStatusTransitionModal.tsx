@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, ShieldAlert, Archive, Trash2, ArrowRight } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { Modal } from '../../../components/common/Modal/Modal';
 import { Button } from '../../../components/common/Button/Button';
 import { Select } from '../../../components/common/Select/Select';
@@ -77,9 +78,10 @@ export const LotStatusTransitionModal: React.FC<LotStatusTransitionModalProps> =
         targetStatus,
         notes: notes.trim() || `Status updated from ${lot.status} to ${targetStatus}`
       });
+      toast.success(`Lot #${lot.lotNumber} status changed to '${targetStatus.toUpperCase()}'!`);
       onClose();
-    } catch {
-      // Error handled by Redux slice state
+    } catch (err: any) {
+      toast.error(err?.message || `Failed to transition Lot #${lot.lotNumber} status`);
     }
   };
 

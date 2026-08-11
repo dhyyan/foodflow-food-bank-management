@@ -1,6 +1,7 @@
 import React, { useState, type FormEvent, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, Shield, CheckCircle2, UserCheck } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { loginUser, clearAuthError } from '../../features/auth/authSlice';
 import { Input } from '../../components/common/Input/Input';
@@ -12,8 +13,8 @@ import { validateEmail, validatePassword } from '../../utils/validation';
 import logoImg from '../../assets/876fb4c9ef2542f1c3eceee921a9a9fb.jpg';
 
 export const UserLoginPage: React.FC = () => {
-  const [email, setEmail] = useState('clerk@foodflow.org');
-  const [password, setPassword] = useState('Clerk@123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string | null; password?: string | null }>({});
 
   const dispatch = useAppDispatch();
@@ -40,7 +41,12 @@ export const UserLoginPage: React.FC = () => {
     }
 
     setErrors({});
-    dispatch(loginUser({ email, password }));
+    const result = await dispatch(loginUser({ email, password }));
+    if (loginUser.fulfilled.match(result)) {
+      toast.success(`Welcome back, ${result.payload.user.name || 'Staff'}! Login successful.`);
+    } else if (loginUser.rejected.match(result)) {
+      toast.error((result.payload as string) || 'Login failed. Please check credentials.');
+    }
   };
 
   const fillCredentials = (userEmail: string, userPass: string) => {

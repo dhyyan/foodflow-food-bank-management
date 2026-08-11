@@ -1,5 +1,6 @@
 import React, { useEffect, useState, type FormEvent } from 'react';
 import { UserPlus, Search, ShieldCheck, Mail, User as UserIcon, Lock } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { PageContainer } from '../../components/layout/PageContainer/PageContainer';
 import { Table, type Column } from '../../components/common/Table/Table';
 import { Button } from '../../components/common/Button/Button';
@@ -40,6 +41,7 @@ export const UserManagementPage: React.FC = () => {
 
   useEffect(() => {
     if (actionSuccess) {
+      toast.success('Staff user registered successfully!');
       setIsModalOpen(false);
       setFormData({
         name: '',
@@ -64,7 +66,7 @@ export const UserManagementPage: React.FC = () => {
     dispatch(resetUserActionState());
   };
 
-  const handleRegisterSubmit = (e: FormEvent) => {
+  const handleRegisterSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const nameErr = validateRequired(formData.name, 'Full Name');
     const emailErr = validateEmail(formData.email);
@@ -76,7 +78,10 @@ export const UserManagementPage: React.FC = () => {
     }
 
     setFormErrors({});
-    dispatch(registerUser(formData));
+    const result = await dispatch(registerUser(formData));
+    if (registerUser.rejected.match(result)) {
+      toast.error((result.payload as string) || 'Failed to register staff user');
+    }
   };
 
   // Filtered User list

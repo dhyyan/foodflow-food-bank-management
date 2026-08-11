@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Layers, ShieldAlert, Check, AlertTriangle } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { Modal } from '../../../components/common/Modal/Modal';
 import { Button } from '../../../components/common/Button/Button';
 import { Loader } from '../../../components/common/Loader/Loader';
@@ -36,8 +37,11 @@ export const FEFOPreviewModal: React.FC<FEFOPreviewModalProps> = ({
     if (!distributionId) return;
     const result = await dispatch(confirmReservation(distributionId));
     if (confirmReservation.fulfilled.match(result)) {
+      toast.success('Distribution request fulfilled with FEFO inventory allocation!');
       if (onSuccess) onSuccess();
       onClose();
+    } else if (confirmReservation.rejected.match(result)) {
+      toast.error((result.payload as string) || 'Failed to confirm distribution reservation');
     }
   };
 
