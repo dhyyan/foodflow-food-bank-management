@@ -2,6 +2,8 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './frameWork/routes/authRoutes';
+import donationRoutes from './frameWork/routes/donationRoutes';
+import lotRoutes from './frameWork/routes/lotRoutes';
 import { errorHandler } from './adapters/middlewares/error/errorMiddleware';
 
 dotenv.config();
@@ -23,6 +25,8 @@ app.get('/health', (_req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/donations', donationRoutes);
+app.use('/api/lots', lotRoutes);
 
 // Centralized Error Handling Middleware
 app.use(errorHandler);

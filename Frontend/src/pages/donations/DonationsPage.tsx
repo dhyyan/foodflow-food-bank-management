@@ -1,43 +1,69 @@
-import React, { useState } from 'react';
-import { Search, Sparkles, Plus } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Search, Sparkles, Plus, Eye, RefreshCw, AlertCircle } from 'lucide-react';
 import { PageContainer } from '../../components/layout/PageContainer/PageContainer';
 import { Table, type Column } from '../../components/common/Table/Table';
 import { Input } from '../../components/common/Input/Input';
+import { Select } from '../../components/common/Select/Select';
 import { StatusBadge } from '../../components/shared/StatusBadge/StatusBadge';
 import { Button } from '../../components/common/Button/Button';
+import { Loader } from '../../components/common/Loader/Loader';
 import { formatDate } from '../../utils/date';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { fetchDonations } from '../../features/donations/donationSlice';
+import type { DonationRecord } from '../../features/donations/donation.types';
+import { CreateDonationModal } from '../../features/donations/components/CreateDonationModal';
+import { DonationDetailsModal } from '../../features/donations/components/DonationDetailsModal';
 
-interface DonationRecord {
-  id: string;
-  donorName: string;
-  donorType: string;
-  itemsReceived: number;
-  totalWeightKg: number;
-  intakeDate: string;
-  processedBy: string;
-  status: 'received' | 'checked' | 'shelved';
-}
-
-const mockDonations: DonationRecord[] = [
-  { id: 'DON-901', donorName: 'Metro Supermarket Chain', donorType: 'Corporate Retailer', itemsReceived: 320, totalWeightKg: 450, intakeDate: '2026-08-11', processedBy: 'Sarah Clerk', status: 'checked' },
-  { id: 'DON-902', donorName: 'Green Valley Bakery', donorType: 'Local Producer', itemsReceived: 140, totalWeightKg: 85, intakeDate: '2026-08-11', processedBy: 'Mark Clerk', status: 'received' },
-  { id: 'DON-903', donorName: 'Community Harvest Farm', donorType: 'Agricultural Donor', itemsReceived: 500, totalWeightKg: 890, intakeDate: '2026-08-10', processedBy: 'Sarah Clerk', status: 'shelved' }
+const DONOR_FILTER_OPTIONS = [
+  { value: 'all', label: 'All Donor Types' },
+  { value: 'Supermarket', label: 'Supermarket / Retailer' },
+  { value: 'Restaurant', label: 'Restaurant / Catering' },
+  { value: 'Individual', label: 'Individual Donor' },
+  { value: 'Corporate', label: 'Corporate Sponsor' },
+  { value: 'Agricultural Farm', label: 'Farm / Agriculture' },
+  { value: 'Bakery', label: 'Bakery' },
+  { value: 'Other', label: 'Other Organizations' }
 ];
 
 export const DonationsPage: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const dispatch = useAppDispatch();
+  const { donations, loading, error } = useAppSelector((state) => state.donations);
 
-  const filteredDonations = mockDonations.filter((d) =>
-    d.donorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [searchTerm, setSearchTerm] = useState('');
+  const [donorTypeFilter, setDonorTypeFilter] = useState('all');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedDonationId, setSelectedDonationId] = useState<string | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  useEffect(() => {
+    dispatch(
+      fetchDonations({
+        search: searchTerm,
+        donorType: donorTypeFilter
+      })
+    );
+  }, [dispatch, searchTerm, donorTypeFilter]);
+
+  const handleRefresh = () => {
+    dispatch(
+      fetchDonations({
+        search: searchTerm,
+        donorType: donorTypeFilter
+      })
+    );
+  };
+
+  const handleViewDetails = (donationId: string) => {
+    setSelectedDonationId(donationId);
+    setIsDetailModalOpen(true);
+  };
 
   const columns: Column<DonationRecord>[] = [
     {
-      header: 'Intake ID',
+      header: 'Intake Number',
       render: (d) => (
-        <span style={{ fontWeight: 800, color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>
-          {d.id}
+        <span style={{ fontWeight: 800, color: 'var(--primary)', fontFamily: 'var(--font-mono)' }}>
+          {d.donationNumber}
         </span>
       )
     },
@@ -51,42 +77,72 @@ export const DonationsPage: React.FC = () => {
       )
     },
     {
-      header: 'Items & Net Weight',
+      header: 'Total Items Intake',
       render: (d) => (
-        <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>
-          {d.itemsReceived} units ({d.totalWeightKg} kg)
-        </span>
+        <div>
+          <span style={{ fontWeight: 700, color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>
+            {d.totalQuantity} units
+          </span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>
+            ({d.totalLines} donated item {d.totalLines === 1 ? 'line' : 'lines'})
+          </span>
+        </div>
       )
     },
     {
       header: 'Intake Date',
-      render: (d) => <span style={{ color: 'var(--text-muted)' }}>{formatDate(d.intakeDate)}</span>
+      render: (d) => <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{formatDate(d.receivedAt)}</span>
     },
     {
       header: 'Processing Clerk',
-      render: (d) => <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{d.processedBy}</span>
+      render: (d) => <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{d.receivedBy.name}</span>
     },
     {
-      header: 'State',
+      header: 'Intake State',
       render: (d) => <StatusBadge status={d.status} />
+    },
+    {
+      header: 'Actions',
+      render: (d) => (
+        <Button
+          variant="outline"
+          size="sm"
+          leftIcon={<Eye size={14} />}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleViewDetails(d.id);
+          }}
+        >
+          View Details
+        </Button>
+      )
     }
   ];
 
   return (
     <PageContainer
       title="Donation Intakes"
-      subtitle="Record incoming food bank donations, parse manifests with AI, and track inspection status"
+      subtitle="Record incoming food bank donations, generate inventory lots, and inspect donor intake details"
       actions={
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Button variant="outline" leftIcon={<Sparkles size={16} />}>
+          <Button
+            variant="outline"
+            leftIcon={<Sparkles size={16} />}
+            onClick={() => alert('AI Manifest Parser is queued for phase 2 setup.')}
+          >
             AI Manifest Parser
           </Button>
-          <Button variant="primary" leftIcon={<Plus size={16} />}>
+          <Button
+            variant="primary"
+            leftIcon={<Plus size={16} />}
+            onClick={() => setIsCreateModalOpen(true)}
+          >
             New Donation Intake
           </Button>
         </div>
       }
     >
+      {/* Search and Filters Header */}
       <div
         className="card"
         style={{
@@ -94,20 +150,77 @@ export const DonationsPage: React.FC = () => {
           marginBottom: '1.25rem',
           display: 'flex',
           gap: '1rem',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexWrap: 'wrap'
         }}
       >
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 2, minWidth: '240px' }}>
           <Input
-            placeholder="Search donor name or intake ID..."
+            placeholder="Search donor organization or intake number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             leftIcon={<Search size={16} />}
           />
         </div>
+        <div style={{ flex: 1, minWidth: '200px' }}>
+          <Select
+            options={DONOR_FILTER_OPTIONS}
+            value={donorTypeFilter}
+            onChange={(e) => setDonorTypeFilter(e.target.value)}
+          />
+        </div>
+        <Button variant="outline" size="md" leftIcon={<RefreshCw size={15} />} onClick={handleRefresh}>
+          Refresh
+        </Button>
       </div>
 
-      <Table columns={columns} data={filteredDonations} emptyMessage="No donation records found" />
+      {/* Error state */}
+      {error && (
+        <div
+          style={{
+            padding: '1rem',
+            marginBottom: '1.25rem',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#991b1b',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
+        >
+          <AlertCircle size={18} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Table & Loading */}
+      {loading && donations.length === 0 ? (
+        <Loader text="Fetching donation intakes..." />
+      ) : (
+        <Table
+          columns={columns}
+          data={donations}
+          emptyMessage="No donation records found. Click 'New Donation Intake' to record a donation."
+        />
+      )}
+
+      {/* Modal: New Donation Intake */}
+      <CreateDonationModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleRefresh}
+      />
+
+      {/* Modal: Donation & Created Lots Details */}
+      <DonationDetailsModal
+        donationId={selectedDonationId}
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedDonationId(null);
+        }}
+      />
     </PageContainer>
   );
 };
