@@ -14,6 +14,7 @@ import { ServerErrorPage } from '../pages/error/ServerErrorPage';
 import { BadRequestPage } from '../pages/error/BadRequestPage';
 import { ErrorElementPage } from '../pages/error/ErrorElementPage';
 import ItemCatalogPage from '../pages/items/ItemCatalogPage';
+import { WasteReportPage } from '../pages/reports/WasteReportPage';
 
 export const router = createBrowserRouter([
   {
@@ -55,7 +56,7 @@ export const router = createBrowserRouter([
         ]
       },
 
-      // Protected Stock Manager Routes
+      // Protected Stock Manager & Admin Routes
       {
         element: <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STOCK_MANAGER]} />,
         children: [
@@ -66,6 +67,10 @@ export const router = createBrowserRouter([
           {
             path: ROUTES.CATALOG,
             element: <ItemCatalogPage />
+          },
+          {
+            path: ROUTES.REPORTS_WASTE,
+            element: <WasteReportPage />
           }
         ]
       },

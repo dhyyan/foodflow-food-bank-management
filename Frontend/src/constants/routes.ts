@@ -10,5 +10,6 @@ export const ROUTES = {
   NOT_FOUND: '/404',
   SERVER_ERROR: '/500',
   BAD_REQUEST: '/400',
-  CATALOG: '/catalog'
+  CATALOG: '/catalog',
+  REPORTS_WASTE: '/reports/waste'
 } as const;

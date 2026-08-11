@@ -1,41 +1,40 @@
-export interface DistributionItemDTO {
+export type AllocationPolicy = 'FEFO' | 'STRATEGIC_RESERVE';
+
+export interface DistributionLineItemDTO {
   itemName: string;
-  requestedQuantity: number;
-  unit: string;
+  category?: string;
+  quantityRequested: number;
 }
 
-export interface ReservationDTO {
-  id: string;
-  distributionId: string;
+export interface AllocatedLotItemDTO {
   lotId: string;
   lotNumber: string;
   itemName: string;
-  quantity: number;
-  unit: string;
-  status: string;
-  createdBy: {
-    id: string;
-    name: string;
-  };
-  createdAt: string;
+  category: string;
+  allocatedQuantity: number;
+  effectiveExpiryDate?: string;
+  receivedDate: string;
+  allocationReason: string; // e.g. "FEFO: Earliest Expiry" or "Strategic Reserve: Most Recently Received"
 }
 
-export interface DistributionResponseDTO {
-  id: string;
-  distributionNumber: string;
-  recipientId: string;
+export interface DistributionAllocationPreviewRequestDTO {
   recipientName: string;
-  recipientType: string;
-  items: DistributionItemDTO[];
-  status: string;
-  reservations?: ReservationDTO[];
+  items: DistributionLineItemDTO[];
+  allocationPolicy?: AllocationPolicy;
+}
+
+export interface DistributionAllocationPreviewResponseDTO {
+  recipientName: string;
+  allocationPolicy: AllocationPolicy;
+  totalUnitsAllocated: number;
+  allocatedLots: AllocatedLotItemDTO[];
+  unfulfilledItems: { itemName: string; missingQuantity: number }[];
+}
+
+export interface CreateDistributionRequestDTO {
+  recipientName: string;
+  familyCount?: number;
+  items: DistributionLineItemDTO[];
+  allocationPolicy?: AllocationPolicy;
   notes?: string;
-  createdBy: {
-    id: string;
-    name: string;
-  };
-  reservedAt?: string;
-  completedAt?: string;
-  createdAt: string;
-  updatedAt: string;
 }

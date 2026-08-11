@@ -8,7 +8,8 @@ import {
   Truck,
   LogOut,
   ShieldCheck,
-  List
+  List,
+  BarChart3
 } from 'lucide-react';
 import { ROUTES } from '../../../constants/routes';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
@@ -32,7 +33,8 @@ export const Sidebar: React.FC = () => {
     { label: 'Donation Intake', path: ROUTES.DONATIONS, icon: HeartHandshake, roles: [ROLES.ADMIN, ROLES.DONATION_CLERK] },
     { label: 'Stock & Lots', path: ROUTES.LOTS, icon: Boxes, roles: [ROLES.ADMIN, ROLES.STOCK_MANAGER] },
     { label: 'Item Catalog', path: ROUTES.CATALOG, icon: List, roles: [ROLES.ADMIN, ROLES.STOCK_MANAGER] },
-    { label: 'Distributions', path: ROUTES.DISTRIBUTIONS, icon: Truck, roles: [ROLES.ADMIN, ROLES.HANDOUT_COORDINATOR] }
+    { label: 'Distributions', path: ROUTES.DISTRIBUTIONS, icon: Truck, roles: [ROLES.ADMIN, ROLES.HANDOUT_COORDINATOR] },
+    { label: 'Waste Report', path: ROUTES.REPORTS_WASTE, icon: BarChart3, roles: [ROLES.ADMIN, ROLES.STOCK_MANAGER] }
   ];
 
   const visibleNavItems = allNavItems.filter((item) => {

@@ -1,83 +1,84 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateDistributionUseCase = void 0;
-const Distribution_1 = require("../../domain/entities/Distribution");
+const DistributionModel_1 = require("../../frameWork/database/models/DistributionModel");
+const ReservationModel_1 = require("../../frameWork/database/models/ReservationModel");
+const LotModel_1 = require("../../frameWork/database/models/LotModel");
+const LotEventModel_1 = require("../../frameWork/database/models/LotEventModel");
 const AppError_1 = require("../../shared/errors/AppError");
 class CreateDistributionUseCase {
-    distributionRepository;
-    recipientRepository;
-    constructor(distributionRepository, recipientRepository) {
-        this.distributionRepository = distributionRepository;
-        this.recipientRepository = recipientRepository;
+    previewAllocationUseCase;
+    constructor(previewAllocationUseCase) {
+        this.previewAllocationUseCase = previewAllocationUseCase;
     }
-    async execute(dto, creator) {
-        if (!dto.recipientId) {
-            throw new AppError_1.BadRequestError('Recipient ID is required');
+    async execute(dto, performedBy) {
+        if (!dto.recipientName || !dto.items || dto.items.length === 0) {
+            throw new AppError_1.BadRequestError('Recipient name and line items are required.');
         }
-        if (!dto.items || dto.items.length === 0) {
-            throw new AppError_1.BadRequestError('At least one item line is required for distribution');
-        }
-        const recipient = await this.recipientRepository.findById(dto.recipientId);
-        if (!recipient) {
-            throw new AppError_1.NotFoundError('Recipient with provided ID was not found');
-        }
-        // Calculate total requested units in this distribution
-        let newRequestTotalUnits = 0;
-        const itemsList = dto.items.map((item) => {
-            if (!item.itemName || !item.itemName.trim()) {
-                throw new AppError_1.BadRequestError('Item name is required for all requested items');
-            }
-            if (!item.requestedQuantity || item.requestedQuantity <= 0) {
-                throw new AppError_1.BadRequestError(`Invalid requested quantity for ${item.itemName}`);
-            }
-            newRequestTotalUnits += item.requestedQuantity;
-            return {
-                itemName: item.itemName.trim(),
-                requestedQuantity: item.requestedQuantity,
-                unit: item.unit ? item.unit.trim() : 'units'
-            };
+        // Preview allocation first
+        const preview = await this.previewAllocationUseCase.execute({
+            recipientName: dto.recipientName,
+            items: dto.items,
+            allocationPolicy: dto.allocationPolicy
         });
-        // Check family 50-unit monthly quota
-        if (recipient.type === 'family') {
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1; // 1-indexed
-            const alreadyReceivedThisMonth = await this.distributionRepository.sumMonthlyUnitsByRecipientId(recipient.id, currentYear, currentMonth);
-            const quota = recipient.monthlyQuota || 50;
-            if (alreadyReceivedThisMonth + newRequestTotalUnits > quota) {
-                const remainingQuota = Math.max(0, quota - alreadyReceivedThisMonth);
-                throw new AppError_1.BadRequestError(`Monthly family quota exceeded. ${remainingQuota} units remaining for this month.`, 'MONTHLY_QUOTA_EXCEEDED');
-            }
+        if (preview.allocatedLots.length === 0) {
+            throw new AppError_1.BadRequestError('No available in-stock lots match the requested items.');
         }
-        // Generate distribution number (DST-XXX)
-        const count = await this.distributionRepository.count();
-        const distributionNumber = `DST-${(count + 101).toString().padStart(3, '0')}`;
-        const distribution = new Distribution_1.Distribution({
+        // Generate unique distribution number
+        const count = await DistributionModel_1.DistributionModel.countDocuments();
+        const distributionNumber = `DST-${String(count + 501).padStart(4, '0')}`;
+        const distributionDoc = await DistributionModel_1.DistributionModel.create({
             distributionNumber,
-            recipientId: recipient.id,
-            recipientName: recipient.name,
-            recipientType: recipient.type,
-            items: itemsList,
-            status: 'pending',
-            createdBy: {
-                id: creator.id,
-                name: creator.name
-            },
-            notes: dto.notes
+            recipientName: dto.recipientName,
+            familyCount: dto.familyCount || 1,
+            allocationPolicy: dto.allocationPolicy || 'FEFO',
+            status: 'reserved',
+            notes: dto.notes,
+            createdBy: performedBy
         });
-        const saved = await this.distributionRepository.create(distribution);
+        const reservations = [];
+        // Atomically decrement stock and create reservations
+        for (const alloc of preview.allocatedLots) {
+            const updatedLot = await LotModel_1.LotModel.findOneAndUpdate({
+                _id: alloc.lotId,
+                availableQuantity: { $gte: alloc.allocatedQuantity }
+            }, {
+                $inc: { availableQuantity: -alloc.allocatedQuantity },
+                $set: { updatedAt: new Date() }
+            }, { new: true });
+            if (!updatedLot) {
+                throw new AppError_1.BadRequestError(`Stock reservation conflict for Lot #${alloc.lotNumber}. Another transaction claimed the stock.`);
+            }
+            // Check if lot is now fully reserved
+            if (updatedLot.availableQuantity === 0) {
+                await LotModel_1.LotModel.findByIdAndUpdate(alloc.lotId, { status: 'reserved' });
+            }
+            const resDoc = await ReservationModel_1.ReservationModel.create({
+                distributionId: distributionDoc._id,
+                lotId: alloc.lotId,
+                quantity: alloc.allocatedQuantity,
+                status: 'reserved',
+                reservedAt: new Date()
+            });
+            reservations.push(resDoc);
+            // Audit trail event
+            await LotEventModel_1.LotEventModel.create({
+                lotId: alloc.lotId,
+                previousStatus: updatedLot.status,
+                newStatus: updatedLot.availableQuantity === 0 ? 'reserved' : updatedLot.status,
+                performedBy,
+                notes: `Reserved ${alloc.allocatedQuantity} units for Distribution #${distributionNumber} (${alloc.allocationReason})`,
+                timestamp: new Date()
+            });
+        }
         return {
-            id: saved.id,
-            distributionNumber: saved.distributionNumber,
-            recipientId: saved.recipientId,
-            recipientName: saved.recipientName,
-            recipientType: saved.recipientType,
-            items: saved.items,
-            status: saved.status,
-            createdBy: saved.createdBy,
-            notes: saved.notes,
-            createdAt: saved.createdAt ? saved.createdAt.toISOString() : new Date().toISOString(),
-            updatedAt: saved.updatedAt ? saved.updatedAt.toISOString() : new Date().toISOString()
+            distributionId: distributionDoc._id.toString(),
+            distributionNumber,
+            recipientName: distributionDoc.recipientName,
+            status: distributionDoc.status,
+            totalUnitsAllocated: preview.totalUnitsAllocated,
+            allocatedLots: preview.allocatedLots,
+            unfulfilledItems: preview.unfulfilledItems
         };
     }
 }

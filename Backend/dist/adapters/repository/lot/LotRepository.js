@@ -197,6 +197,19 @@ class LotRepository {
             return null;
         return this.mapDocumentToEntity(doc);
     }
+    async decrementAvailableQuantity(id, quantityToDeduct) {
+        // Atomic Conditional Update: Only updates if availableQuantity >= quantityToDeduct
+        const doc = await LotModel_1.LotModel.findOneAndUpdate({
+            _id: id,
+            availableQuantity: { $gte: quantityToDeduct }
+        }, {
+            $inc: { availableQuantity: -quantityToDeduct },
+            $set: { updatedAt: new Date() }
+        }, { new: true });
+        if (!doc)
+            return null; // Fails atomically if another concurrent transaction claimed the stock first!
+        return this.mapDocumentToEntity(doc);
+    }
     async count() {
         return await LotModel_1.LotModel.countDocuments();
     }

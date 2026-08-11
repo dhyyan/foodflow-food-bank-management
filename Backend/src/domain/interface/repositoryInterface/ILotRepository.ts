@@ -9,5 +9,6 @@ export interface ILotRepository {
   findAll(filter?: LotFilterDTO): Promise<{ lots: Lot[]; total: number }>;
   updateStatus(id: string, status: LotStatus): Promise<Lot | null>;
   update(lot: Lot): Promise<Lot | null>;
+  decrementAvailableQuantity(id: string, quantityToDeduct: number): Promise<Lot | null>;
   count(): Promise<number>;
 }
