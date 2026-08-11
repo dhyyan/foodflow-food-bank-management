@@ -1,5 +1,6 @@
 import { DonationRepository } from '../../adapters/repository/donation/DonationRepository';
 import { LotRepository } from '../../adapters/repository/lot/LotRepository';
+import { LotEventRepository } from '../../adapters/repository/lot/LotEventRepository';
 import { CreateDonationUseCase } from '../../useCase/donation/CreateDonationUseCase';
 import { GetDonationsUseCase } from '../../useCase/donation/GetDonationsUseCase';
 import { GetDonationByIdUseCase } from '../../useCase/donation/GetDonationByIdUseCase';
@@ -7,8 +8,13 @@ import { DonationController } from '../../adapters/controllers/donation/Donation
 
 export const donationRepository = new DonationRepository();
 export const lotRepository = new LotRepository();
+export const lotEventRepository = new LotEventRepository();
 
-const createDonationUseCase = new CreateDonationUseCase(donationRepository, lotRepository);
+const createDonationUseCase = new CreateDonationUseCase(
+  donationRepository,
+  lotRepository,
+  lotEventRepository
+);
 const getDonationsUseCase = new GetDonationsUseCase(donationRepository);
 const getDonationByIdUseCase = new GetDonationByIdUseCase(donationRepository, lotRepository);
 

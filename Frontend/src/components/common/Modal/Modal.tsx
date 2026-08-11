@@ -1,4 +1,5 @@
 import React, { type ReactNode, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 export interface ModalProps {
@@ -34,34 +35,38 @@ export const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div
       style={{
         position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'rgba(15, 23, 42, 0.45)',
         backdropFilter: 'blur(3px)',
-        padding: '1rem',
-        animation: 'fadeIn 0.2s ease forwards'
+        padding: '1.5rem 1rem',
+        overflowY: 'auto'
       }}
       onClick={onClose}
     >
       <div
         style={{
           backgroundColor: '#ffffff',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-xl)',
+          borderRadius: 'var(--radius-lg, 14px)',
+          boxShadow: '0 20px 25px -5px rgba(15, 23, 42, 0.2), 0 8px 10px -6px rgba(15, 23, 42, 0.1)',
           width: '100%',
           maxWidth,
-          maxHeight: '90vh',
+          maxHeight: 'calc(100vh - 3rem)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          border: '1px solid var(--border-default)'
+          border: '1px solid var(--border-default, #e2e8f0)',
+          margin: 'auto'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -69,7 +74,7 @@ export const Modal: React.FC<ModalProps> = ({
         <div
           style={{
             padding: '1.25rem 1.5rem',
-            borderBottom: '1px solid var(--border-light)',
+            borderBottom: '1px solid var(--border-light, #f1f5f9)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -77,11 +82,11 @@ export const Modal: React.FC<ModalProps> = ({
           }}
         >
           <div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main, #0f172a)' }}>
               {title}
             </h3>
             {subtitle && (
-              <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+              <p style={{ fontSize: '0.83rem', color: 'var(--text-muted, #64748b)', marginTop: '0.2rem' }}>
                 {subtitle}
               </p>
             )}
@@ -90,12 +95,15 @@ export const Modal: React.FC<ModalProps> = ({
             onClick={onClose}
             style={{
               padding: '0.4rem',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-muted)',
+              borderRadius: 'var(--radius-sm, 6px)',
+              color: 'var(--text-muted, #64748b)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'background-color 0.15s ease'
+              transition: 'background-color 0.15s ease',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer'
             }}
             aria-label="Close Modal"
           >
@@ -116,4 +124,6 @@ export const Modal: React.FC<ModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

@@ -7,6 +7,7 @@ export interface IGetLotsUseCase {
     total: number;
     page: number;
     limit: number;
+    totalPages: number;
   }>;
 }
 
@@ -18,6 +19,7 @@ export class GetLotsUseCase implements IGetLotsUseCase {
     total: number;
     page: number;
     limit: number;
+    totalPages: number;
   }> {
     const page = filter?.page || 1;
     const limit = filter?.limit || 20;
@@ -38,17 +40,22 @@ export class GetLotsUseCase implements IGetLotsUseCase {
       effectiveExpiryDate: lot.effectiveExpiryDate ? lot.effectiveExpiryDate.toISOString() : undefined,
       donationId: lot.donationId,
       donationLineId: lot.donationLineId,
+      donorName: (lot as any).donorName,
+      donorType: (lot as any).donorType,
       status: lot.status,
       createdBy: lot.createdBy,
       createdAt: lot.createdAt ? lot.createdAt.toISOString() : new Date().toISOString(),
       updatedAt: lot.updatedAt ? lot.updatedAt.toISOString() : new Date().toISOString()
     }));
 
+    const totalPages = Math.ceil(total / limit) || 1;
+
     return {
       lots: lotDTOs,
       total,
       page,
-      limit
+      limit,
+      totalPages
     };
   }
 }
