@@ -6,7 +6,10 @@ import {
   GitCommit,
   Eye,
   ArrowUpDown,
-  AlertTriangle
+  AlertTriangle,
+  Truck,
+  History,
+  QrCode
 } from 'lucide-react';
 import { PageContainer } from '../../components/layout/PageContainer/PageContainer';
 import { Table, type Column } from '../../components/common/Table/Table';
@@ -24,6 +27,9 @@ import type { LotItem } from '../../features/lots/lot.types';
 import { LotDetailsModal } from '../../features/lots/components/LotDetailsModal';
 import { LotTraceModal } from '../../features/lots/components/LotTraceModal';
 import { LotStatusTransitionModal } from '../../features/lots/components/LotStatusTransitionModal';
+import { WarehouseTransferModal } from '../../features/warehouses/components/WarehouseTransferModal';
+import { FieldAuditTrailModal } from '../../features/lots/components/FieldAuditTrailModal';
+import { PrintLotLabelModal } from '../../features/lots/components/PrintLotLabelModal';
 
 export const LotsPage: React.FC = () => {
   const {
@@ -48,6 +54,9 @@ export const LotsPage: React.FC = () => {
   const [isTraceOpen, setIsTraceOpen] = useState(false);
   const [isTransitionOpen, setIsTransitionOpen] = useState(false);
   const [transitionDefaultTarget, setTransitionDefaultTarget] = useState<string | undefined>();
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
+  const [isQROpen, setIsQROpen] = useState(false);
 
   // Fetch lots on initial load
   useEffect(() => {
@@ -245,6 +254,77 @@ export const LotsPage: React.FC = () => {
               Discard
             </Button>
           )}
+
+          {/* Transfer Warehouse Stock Button */}
+          {item.status === 'shelved' && item.availableQuantity > 0 && (
+            <button
+              onClick={() => {
+                setActiveModalLot(item);
+                setIsTransferOpen(true);
+              }}
+              title="Inter-Warehouse Transfer"
+              style={{
+                padding: '0.35rem 0.5rem',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border-default)',
+                backgroundColor: '#eff6ff',
+                color: '#1e40af',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                fontSize: '0.78rem'
+              }}
+            >
+              <Truck size={14} style={{ color: '#2563eb' }} />
+            </button>
+          )}
+
+          {/* Field-Level Audit Trail Button */}
+          <button
+            onClick={() => {
+              setActiveModalLot(item);
+              setIsAuditOpen(true);
+            }}
+            title="View Full Field Change Audit Trail"
+            style={{
+              padding: '0.35rem 0.5rem',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-default)',
+              backgroundColor: '#f0fdf4',
+              color: '#166534',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontSize: '0.78rem'
+            }}
+          >
+            <History size={14} style={{ color: '#16a34a' }} />
+          </button>
+
+          {/* Printable Barcode / QR Label Tag Button */}
+          <button
+            onClick={() => {
+              setActiveModalLot(item);
+              setIsQROpen(true);
+            }}
+            title="Generate & Print QR Label Tag"
+            style={{
+              padding: '0.35rem 0.5rem',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-default)',
+              backgroundColor: '#faf5ff',
+              color: '#6b21a8',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontSize: '0.78rem'
+            }}
+          >
+            <QrCode size={14} style={{ color: '#9333ea' }} />
+          </button>
 
           {/* Trace Button */}
           <button
@@ -489,6 +569,25 @@ export const LotsPage: React.FC = () => {
         onClose={() => setIsTransitionOpen(false)}
         lot={activeModalLot}
         defaultTargetStatus={transitionDefaultTarget}
+      />
+
+      <WarehouseTransferModal
+        isOpen={isTransferOpen}
+        onClose={() => setIsTransferOpen(false)}
+        lot={activeModalLot}
+        onSuccess={() => loadLots()}
+      />
+
+      <FieldAuditTrailModal
+        isOpen={isAuditOpen}
+        onClose={() => setIsAuditOpen(false)}
+        lot={activeModalLot}
+      />
+
+      <PrintLotLabelModal
+        isOpen={isQROpen}
+        onClose={() => setIsQROpen(false)}
+        lot={activeModalLot}
       />
     </PageContainer>
   );
