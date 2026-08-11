@@ -4,6 +4,7 @@ import { LotResponseDTO, TransitionLotStatusDTO } from '../../domain/interface/D
 import { LotStatus } from '../../domain/entities/Lot';
 import { LotEvent } from '../../domain/entities/LotEvent';
 import { BadRequestError, NotFoundError } from '../../shared/errors/AppError';
+import { FieldAuditLogModel } from '../../frameWork/database/models/FieldAuditLogModel';
 
 export interface ITransitionLotStatusUseCase {
   execute(
@@ -73,6 +74,19 @@ export class TransitionLotStatusUseCase implements ITransitionLotStatusUseCase {
     });
 
     await this.lotEventRepository.create(eventEntity);
+
+    // Save Field-Level Audit Log Diff (Who/When/Old/New)
+    await FieldAuditLogModel.create({
+      entityType: 'Lot',
+      entityId: lot.id!,
+      lotNumber: lot.lotNumber,
+      fieldName: 'status',
+      oldValue: currentStatus,
+      newValue: targetStatus,
+      changedBy: { id: userId, name: userName, role: userRole },
+      notes: dto.notes || `Status state transition from ${currentStatus} to ${targetStatus}`,
+      timestamp: new Date()
+    });
 
     return {
       id: updatedLot.id!,
