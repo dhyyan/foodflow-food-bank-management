@@ -14,4 +14,12 @@ router.post(
   aiController.parseManifest
 );
 
+// AI Vision Photo Manifest Parser endpoint (Admin, Donation Clerk, or Stock Manager)
+router.post(
+  '/parse-manifest-image',
+  jwtMiddleware,
+  requireRole(UserRole.ADMIN, UserRole.DONATION_CLERK, UserRole.STOCK_MANAGER),
+  aiController.parseManifestImage
+);
+
 export default router;

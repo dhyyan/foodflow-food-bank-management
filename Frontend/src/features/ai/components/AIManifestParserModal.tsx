@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Sparkles, AlertTriangle, CheckCircle2, ShieldCheck, Plus, Trash2, RefreshCw } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Sparkles, AlertTriangle, CheckCircle2, ShieldCheck, Plus, Trash2, RefreshCw, Upload, Camera, FileText, Image as ImageIcon, X } from 'lucide-react';
 import { Modal } from '../../../components/common/Modal/Modal';
 import { Button } from '../../../components/common/Button/Button';
 import { Input } from '../../../components/common/Input/Input';
 import { Select } from '../../../components/common/Select/Select';
-import { parseManifestApi } from '../aiApi';
+import { parseManifestApi, parseManifestImageApi } from '../aiApi';
 import type { ParsedManifestItem } from '../ai.types';
 import { useAppDispatch } from '../../../app/hooks';
 import { createDonation, resetCreateSuccess } from '../../donations/donationSlice';
@@ -15,7 +15,7 @@ interface AIManifestParserModalProps {
   onSuccess?: () => void;
 }
 
-const PRESET_MANIFESTS = [
+const PRESET_TEXT_MANIFESTS = [
   {
     label: 'Standard Manifest (With Vague Item)',
     text: `ABC Supermarket\nReceived: 11/08/2026\n\n5 bags rice\n20 milk packets\n2 dozen eggs\n30 cans beans\na few apples`
@@ -29,6 +29,13 @@ const PRESET_MANIFESTS = [
     text: `Green Valley Farm\nDate: 2026-08-15\n\n100 kg organic potatoes\n50 boxes fresh tomatoes\nsome strawberries\n15 cartons fresh milk`
   }
 ];
+
+// Sample SVG/Canvas generated base64 image data-urls for 1-click photo testing
+const SAMPLE_PRINTED_RECEIPT_BASE64 = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23f8fafc" stroke="%23cbd5e1" stroke-width="4"/><text x="20" y="40" font-family="monospace" font-size="18" font-weight="bold" fill="%230f172a">ABC FOOD STORE - INTAKE</text><text x="20" y="70" font-family="monospace" font-size="14" fill="%23475569">Date: 2026-08-20</text><text x="20" y="110" font-family="monospace" font-size="15" fill="%231e293b">1. rice 5 bags</text><text x="20" y="140" font-family="monospace" font-size="15" fill="%231e293b">2. milk 20 packets</text><text x="20" y="170" font-family="monospace" font-size="15" fill="%231e293b">3. 2 dozen eggs</text><text x="20" y="200" font-family="monospace" font-size="15" fill="%231e293b">4. 30 cans beans</text><text x="20" y="230" font-family="monospace" font-size="15" fill="%23dc2626">5. few apples [FLAGGED]</text><rect x="15" y="255" width="370" height="30" rx="4" fill="%23e2e8f0"/><text x="25" y="275" font-family="monospace" font-size="12" fill="%2364748b">SCANNER VERIFIED • PRINTED MANIFEST</text></svg>`;
+
+const SAMPLE_SUNSHINE_FARMS_BASE64 = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="320" viewBox="0 0 400 320"><rect width="400" height="320" fill="%23ffffff" stroke="%23cbd5e1" stroke-width="4"/><text x="30" y="45" font-family="monospace" font-size="20" font-weight="bold" fill="%230f172a">Sunshine Farms</text><text x="30" y="75" font-family="monospace" font-size="16" fill="%23334155">Date: 2026-08-20</text><line x1="30" y1="90" x2="370" y2="90" stroke="%23e2e8f0" stroke-width="2"/><text x="30" y="130" font-family="monospace" font-size="17" fill="%231e293b">120 kg carrots</text><text x="30" y="170" font-family="monospace" font-size="17" fill="%231e293b">60 boxes cucumbers</text><text x="30" y="210" font-family="monospace" font-size="17" fill="%231e293b">30 bags spinach</text><text x="30" y="250" font-family="monospace" font-size="17" fill="%231e293b">25 cartons almond milk</text></svg>`;
+
+const SAMPLE_HANDWRITTEN_LIST_BASE64 = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23fffbe3" stroke="%23fde047" stroke-width="4"/><text x="30" y="45" font-family="cursive, sans-serif" font-size="20" font-weight="bold" fill="%23713f12">Green Valley Organic Farm</text><text x="30" y="75" font-family="cursive, sans-serif" font-size="15" fill="%23854d0e">Date: Aug 15, 2026</text><line x1="30" y1="85" x2="370" y2="85" stroke="%23ca8a04" stroke-width="2"/><text x="30" y="120" font-family="cursive, sans-serif" font-size="16" fill="%23422006">- 100 kg organic potatoes</text><text x="30" y="155" font-family="cursive, sans-serif" font-size="16" fill="%23422006">- 50 boxes fresh tomatoes</text><text x="30" y="190" font-family="cursive, sans-serif" font-size="16" fill="%23b45309">- some strawberries (vague)</text><text x="30" y="225" font-family="cursive, sans-serif" font-size="16" fill="%23422006">- 15 cartons fresh milk</text><text x="30" y="275" font-family="sans-serif" font-size="12" fill="%23a16207">📷 HANDWRITTEN MANIFEST SCAN</text></svg>`;
 
 const CATEGORY_OPTIONS = [
   { value: 'Grains', label: 'Grains & Cereals' },
@@ -61,8 +68,22 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
   onSuccess
 }) => {
   const dispatch = useAppDispatch();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  const [manifestText, setManifestText] = useState(PRESET_MANIFESTS[0].text);
+  // Tab mode: 'text' | 'image'
+  const [activeTab, setActiveTab] = useState<'text' | 'image'>('text');
+
+  // Input states
+  const [manifestText, setManifestText] = useState(PRESET_TEXT_MANIFESTS[0].text);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [mimeType, setMimeType] = useState<string>('image/jpeg');
+
+  // Camera stream state
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+
+  // General state
   const [parsing, setParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [parsedData, setParsedData] = useState<{
@@ -74,7 +95,67 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [donorType, setDonorType] = useState('Supermarket');
 
-  const handleParse = async () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (PNG, JPEG, WEBP).');
+      return;
+    }
+
+    setError(null);
+    setMimeType(file.type);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setSelectedImage(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const startCamera = async () => {
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      setMediaStream(stream);
+      setIsCameraActive(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err: any) {
+      setError('Unable to access device camera. Please check permissions or upload a file.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach((track) => track.stop());
+      setMediaStream(null);
+    }
+    setIsCameraActive(false);
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth || 640;
+    canvas.height = videoRef.current.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      setSelectedImage(dataUrl);
+      setMimeType('image/jpeg');
+    }
+    stopCamera();
+  };
+
+  const handleParseText = async () => {
     if (!manifestText.trim()) {
       setError('Please paste or type manifest text to parse.');
       return;
@@ -99,6 +180,36 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
       });
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to parse manifest. Please check your text.');
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const handleParseImage = async () => {
+    if (!selectedImage) {
+      setError('Please upload or capture a manifest photo to parse.');
+      return;
+    }
+
+    setError(null);
+    setParsing(true);
+
+    try {
+      const response = await parseManifestImageApi(selectedImage, mimeType);
+      const data = response.data;
+
+      setParsedData({
+        donorName: data.donor_name || 'ABC Food Store',
+        receivedAt: data.received_date ? `${data.received_date}T10:00` : new Date().toISOString().slice(0, 16),
+        items: data.items.map((item) => ({
+          ...item,
+          quantity: item.quantity !== null ? item.quantity : null,
+          unit: item.unit || 'units',
+          category: item.category || 'Other'
+        }))
+      });
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Failed to parse manifest image with AI vision. Please try again.');
     } finally {
       setParsing(false);
     }
@@ -176,7 +287,7 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
         donorName: parsedData.donorName.trim() || 'Unspecified Donor',
         donorType: donorType,
         receivedAt: parsedData.receivedAt,
-        notes: `Extracted via AI Manifest Parser from raw manifest text.`,
+        notes: `Extracted via AI Manifest Parser (${activeTab === 'image' ? 'Multimodal Vision Photo' : 'Text Note'}).`,
         lines: parsedData.items.map((item) => ({
           itemName: item.item_name.trim(),
           category: item.category || 'Other',
@@ -208,9 +319,12 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => {
+        stopCamera();
+        onClose();
+      }}
       title="AI Manifest Extraction & Review"
-      subtitle="Parse raw manifest text into structured line items with AI assistance & human verification"
+      subtitle="Parse text notes or manifest photos with AI Vision into structured line items with human review"
       maxWidth="900px"
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -230,7 +344,7 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
         >
           <ShieldCheck size={20} style={{ color: '#2563eb', flexShrink: 0 }} />
           <div>
-            <strong>Strict Isolation Policy Enforced:</strong> AI only extracts structured JSON from manifest text. It never directly creates donations or inventory lots. All parsed items require human review and confirmation.
+            <strong>Strict Isolation Policy Enforced:</strong> AI only converts raw text or photos into structured JSON. It never directly mutates inventory. All items require human review & confirmation.
           </div>
         </div>
 
@@ -256,76 +370,361 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
         {/* STEP 1: MANIFEST INPUT AREA */}
         {!parsedData ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <label
+            {/* Mode Tabs: Text Note vs Photo Upload */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.5rem',
+                borderBottom: '1px solid var(--border-light)',
+                paddingBottom: '0.5rem'
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  stopCamera();
+                  setActiveTab('text');
+                  setError(null);
+                }}
                 style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: activeTab === 'text' ? 'var(--primary)' : 'var(--bg-subtle)',
+                  color: activeTab === 'text' ? '#ffffff' : 'var(--text-main)',
                   fontWeight: 700,
-                  color: 'var(--text-main)',
-                  marginBottom: '0.4rem'
+                  fontSize: '0.85rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                Paste Manifest Text / Delivery Receipt *
-              </label>
-              <textarea
-                value={manifestText}
-                onChange={(e) => setManifestText(e.target.value)}
-                placeholder="Paste raw manifest text from supplier invoice, email, or physical receipt..."
-                rows={7}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-default)',
-                  fontFamily: 'monospace',
-                  fontSize: '0.88rem',
-                  backgroundColor: 'var(--bg-card)',
-                  color: 'var(--text-main)',
-                  resize: 'vertical'
+                <FileText size={16} />
+                Text Note Input
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('image');
+                  setError(null);
                 }}
-              />
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: activeTab === 'image' ? 'var(--primary)' : 'var(--bg-subtle)',
+                  color: activeTab === 'image' ? '#ffffff' : 'var(--text-main)',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Camera size={16} />
+                Upload / Capture Manifest Photo
+              </button>
             </div>
 
-            {/* Quick Fill Presets */}
-            <div>
-              <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>
-                Load Sample Test Manifests:
-              </span>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {PRESET_MANIFESTS.map((preset, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setManifestText(preset.text)}
+            {/* TAB 1: TEXT NOTE INPUT */}
+            {activeTab === 'text' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label
                     style={{
-                      fontSize: '0.75rem',
-                      padding: '0.35rem 0.65rem',
-                      borderRadius: 'var(--radius-sm)',
-                      backgroundColor: 'var(--bg-subtle)',
-                      border: '1px solid var(--border-light)',
-                      color: 'var(--primary)',
-                      fontWeight: 600,
-                      cursor: 'pointer'
+                      display: 'block',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      color: 'var(--text-main)',
+                      marginBottom: '0.4rem'
                     }}
                   >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    Paste Manifest Text / Delivery Receipt *
+                  </label>
+                  <textarea
+                    value={manifestText}
+                    onChange={(e) => setManifestText(e.target.value)}
+                    placeholder="Paste raw manifest text from supplier invoice, email, or physical receipt..."
+                    rows={7}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border-default)',
+                      fontFamily: 'monospace',
+                      fontSize: '0.88rem',
+                      backgroundColor: 'var(--bg-card)',
+                      color: 'var(--text-main)',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
-              <Button
-                variant="primary"
-                size="md"
-                isLoading={parsing}
-                leftIcon={<Sparkles size={16} />}
-                onClick={handleParse}
-              >
-                Parse Manifest with AI
-              </Button>
-            </div>
+                {/* Quick Fill Presets */}
+                <div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>
+                    Load Sample Test Manifests:
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {PRESET_TEXT_MANIFESTS.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setManifestText(preset.text)}
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '0.35rem 0.65rem',
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: 'var(--bg-subtle)',
+                          border: '1px solid var(--border-light)',
+                          color: 'var(--primary)',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    isLoading={parsing}
+                    leftIcon={<Sparkles size={16} />}
+                    onClick={handleParseText}
+                  >
+                    Parse Manifest with AI
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: PHOTO UPLOAD / CAMERA CAPTURE */}
+            {activeTab === 'image' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+
+                {/* Camera View Mode */}
+                {isCameraActive ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', backgroundColor: '#000', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      style={{ width: '100%', maxHeight: '280px', borderRadius: 'var(--radius-sm)', objectFit: 'cover' }}
+                    />
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                      <Button variant="primary" size="sm" leftIcon={<Camera size={16} />} onClick={capturePhoto}>
+                        Take Snap
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={stopCamera} style={{ color: '#fff', borderColor: '#666' }}>
+                        Cancel Camera
+                      </Button>
+                    </div>
+                  </div>
+                ) : selectedImage ? (
+                  /* Image Preview Card */
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '1rem',
+                      borderRadius: 'var(--radius-md)',
+                      backgroundColor: 'var(--bg-subtle)',
+                      border: '1px solid var(--border-default)'
+                    }}
+                  >
+                    <div style={{ position: 'relative', maxWidth: '100%', maxHeight: '260px', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
+                      <img
+                        src={selectedImage}
+                        alt="Manifest Scan Preview"
+                        style={{ maxWidth: '100%', maxHeight: '250px', objectFit: 'contain', borderRadius: 'var(--radius-md)' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setSelectedImage(null)}
+                        style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          backgroundColor: 'rgba(0,0,0,0.6)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '28px',
+                          height: '28px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      Manifest Photo Loaded ({mimeType.replace('image/', '').toUpperCase()})
+                    </span>
+                  </div>
+                ) : (
+                  /* Drop/Select Box */
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '2.5rem 1.5rem',
+                      borderRadius: 'var(--radius-md)',
+                      border: '2px dashed var(--border-default)',
+                      backgroundColor: 'var(--bg-subtle)',
+                      textAlign: 'center',
+                      gap: '0.75rem'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '50px',
+                        height: '50px',
+                        borderRadius: '50%',
+                        backgroundColor: '#eff6ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--primary)'
+                      }}
+                    >
+                      <ImageIcon size={26} />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        Upload or Capture Manifest Photo
+                      </h4>
+                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Supports printed invoices, delivery receipts, and handwritten donation lists
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        leftIcon={<Upload size={14} />}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Browse File
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        leftIcon={<Camera size={14} />}
+                        onClick={startCamera}
+                      >
+                        Use Camera
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Preset Manifest Image Demo Buttons */}
+                <div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem' }}>
+                    Load Preset Manifest Photo Demos:
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedImage(SAMPLE_PRINTED_RECEIPT_BASE64);
+                        setMimeType('image/svg+xml');
+                        setError(null);
+                      }}
+                      style={{
+                        fontSize: '0.75rem',
+                        padding: '0.35rem 0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--bg-subtle)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--primary)',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📷 Printed Receipt Scan (With Flagged Apples)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedImage(SAMPLE_SUNSHINE_FARMS_BASE64);
+                        setMimeType('image/svg+xml');
+                        setError(null);
+                      }}
+                      style={{
+                        fontSize: '0.75rem',
+                        padding: '0.35rem 0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--bg-subtle)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--primary)',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      🌾 Sunshine Farms Scan (Carrots, Cucumbers, Spinach, Almond Milk)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedImage(SAMPLE_HANDWRITTEN_LIST_BASE64);
+                        setMimeType('image/svg+xml');
+                        setError(null);
+                      }}
+                      style={{
+                        fontSize: '0.75rem',
+                        padding: '0.35rem 0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--bg-subtle)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--primary)',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✍️ Handwritten Farm List (Vague Strawberries)
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    isLoading={parsing}
+                    disabled={!selectedImage}
+                    leftIcon={<Sparkles size={16} />}
+                    onClick={handleParseImage}
+                  >
+                    Parse Photo with AI Vision
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* STEP 2: HUMAN REVIEW UI */
@@ -355,7 +754,7 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
                 leftIcon={<RefreshCw size={14} />}
                 onClick={() => setParsedData(null)}
               >
-                Re-Parse Text
+                Re-Parse Input
               </Button>
             </div>
 

@@ -4,15 +4,31 @@ import { ParseManifestRequestDTO, ManifestParseResultDTO, ParsedManifestItemDTO 
 import { BadRequestError } from '../../shared/errors/AppError';
 
 export class ParseManifestUseCase implements IParseManifestUseCase {
-  constructor(private readonly aiManifestService: IAIManifestService) {}
+  constructor(private readonly aiManifestService: IAIManifestService) { }
 
   async execute(dto: ParseManifestRequestDTO): Promise<ManifestParseResultDTO> {
-    if (!dto || !dto.manifestText || typeof dto.manifestText !== 'string' || !dto.manifestText.trim()) {
-      throw new BadRequestError('Manifest text is required and cannot be empty.');
+    if (!dto) {
+      throw new BadRequestError('Request body is required.');
+    }
+
+    const hasText = Boolean(dto.manifestText && typeof dto.manifestText === 'string' && dto.manifestText.trim());
+    const hasImage = Boolean(dto.imageBase64 && typeof dto.imageBase64 === 'string' && dto.imageBase64.trim());
+
+    if (!hasText && !hasImage) {
+      throw new BadRequestError('Either manifest text or manifest photo image is required.');
     }
 
     // AI only parses the manifest. It NEVER directly creates donations or lots!
-    const parsedResult = await this.aiManifestService.parseManifest(dto.manifestText);
+    let parsedResult: ManifestParseResultDTO;
+
+    if (hasImage) {
+      parsedResult = await this.aiManifestService.parseManifestImage(
+        dto.imageBase64!,
+        dto.mimeType || 'image/jpeg'
+      );
+    } else {
+      parsedResult = await this.aiManifestService.parseManifest(dto.manifestText!);
+    }
 
     // Perform Schema Validation and Cleaning
     const validatedItems: ParsedManifestItemDTO[] = parsedResult.items.map((item) => {
@@ -52,7 +68,7 @@ export class ParseManifestUseCase implements IParseManifestUseCase {
     });
 
     return {
-      raw_text: dto.manifestText,
+      raw_text: hasImage ? '[Photo Manifest OCR]' : dto.manifestText!,
       donor_name: parsedResult.donor_name || null,
       received_date: parsedResult.received_date || null,
       items: validatedItems

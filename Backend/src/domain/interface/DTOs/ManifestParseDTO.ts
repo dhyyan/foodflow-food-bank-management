@@ -1,5 +1,7 @@
 export interface ParseManifestRequestDTO {
-  manifestText: string;
+  manifestText?: string;
+  imageBase64?: string;
+  mimeType?: string;
 }
 
 export interface ParsedManifestItemDTO {

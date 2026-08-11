@@ -7,3 +7,11 @@ export const parseManifestApi = async (manifestText: string): Promise<ParseManif
   });
   return response.data;
 };
+
+export const parseManifestImageApi = async (imageBase64: string, mimeType: string = 'image/jpeg'): Promise<ParseManifestResponse> => {
+  const response = await apiClient.post<ParseManifestResponse>('/ai/parse-manifest-image', {
+    imageBase64,
+    mimeType
+  });
+  return response.data;
+};
