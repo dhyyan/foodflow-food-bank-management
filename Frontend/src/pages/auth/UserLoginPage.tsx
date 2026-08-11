@@ -1,6 +1,7 @@
 import React, { useState, type FormEvent, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, Shield, CheckCircle2, UserCheck } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { loginUser, clearAuthError } from '../../features/auth/authSlice';
 import { Input } from '../../components/common/Input/Input';
@@ -40,7 +41,12 @@ export const UserLoginPage: React.FC = () => {
     }
 
     setErrors({});
-    dispatch(loginUser({ email, password }));
+    const result = await dispatch(loginUser({ email, password }));
+    if (loginUser.fulfilled.match(result)) {
+      toast.success(`Welcome back, ${result.payload.user.name || 'Staff'}! Login successful.`);
+    } else if (loginUser.rejected.match(result)) {
+      toast.error((result.payload as string) || 'Login failed. Please check credentials.');
+    }
   };
 
   const fillCredentials = (userEmail: string, userPass: string) => {

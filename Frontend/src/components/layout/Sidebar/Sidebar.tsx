@@ -8,6 +8,7 @@ import {
     LogOut,
     ShieldCheck
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { ROUTES } from '../../../constants/routes';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { logout } from '../../../features/auth/authSlice';
@@ -18,6 +19,11 @@ import logoImg from '../../../assets/876fb4c9ef2542f1c3eceee921a9a9fb.jpg';
 export const Sidebar: React.FC = () => {
     const dispatch = useAppDispatch();
     const { user } = useAppSelector((state) => state.auth);
+
+    const handleLogout = () => {
+        dispatch(logout());
+        toast.info('Logged out successfully');
+    };
 
     const allNavItems = [
         { label: 'User Management', path: ROUTES.USERS, icon: Users, roles: [ROLES.ADMIN] },
@@ -145,7 +151,7 @@ export const Sidebar: React.FC = () => {
                 </div>
 
                 <button
-                    onClick={() => dispatch(logout())}
+                    onClick={handleLogout}
                     style={{
                         width: '100%',
                         display: 'flex',

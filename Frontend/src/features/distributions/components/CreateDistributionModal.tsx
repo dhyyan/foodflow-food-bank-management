@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Send, AlertCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { Modal } from '../../../components/common/Modal/Modal';
 import { Input } from '../../../components/common/Input/Input';
 import { Select } from '../../../components/common/Select/Select';
@@ -126,8 +127,11 @@ export const CreateDistributionModal: React.FC<CreateDistributionModalProps> = (
 
     const result = await dispatch(createDistribution(payload));
     if (createDistribution.fulfilled.match(result)) {
+      toast.success('Distribution request created successfully!');
       if (onSuccess) onSuccess();
       onClose();
+    } else if (createDistribution.rejected.match(result)) {
+      toast.error((result.payload as string) || 'Failed to create distribution request');
     }
   };
 

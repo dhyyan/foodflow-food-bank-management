@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Eye, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { PageContainer } from '../../components/layout/PageContainer/PageContainer';
 import { Table, type Column } from '../../components/common/Table/Table';
 import { Input } from '../../components/common/Input/Input';
@@ -58,7 +59,12 @@ export const DistributionsPage: React.FC = () => {
   };
 
   const handleComplete = async (dist: DistributionRecord) => {
-    await dispatch(completeDistribution(dist.id));
+    const result = await dispatch(completeDistribution(dist.id));
+    if (completeDistribution.fulfilled.match(result)) {
+      toast.success(`Distribution #${dist.distributionNumber} completed & food handed out!`);
+    } else if (completeDistribution.rejected.match(result)) {
+      toast.error((result.payload as string) || 'Failed to complete distribution handout');
+    }
   };
 
   const columns: Column<DistributionRecord>[] = [

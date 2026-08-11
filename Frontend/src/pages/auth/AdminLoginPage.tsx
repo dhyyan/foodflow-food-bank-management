@@ -1,6 +1,7 @@
 import React, { useState, type FormEvent, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, ShieldCheck, CheckCircle2, User } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { loginUser, clearAuthError, logout } from '../../features/auth/authSlice';
 import { Input } from '../../components/common/Input/Input';
@@ -28,6 +29,7 @@ export const AdminLoginPage: React.FC = () => {
       } else {
         // Non-admin user attempted login at Admin Portal
         setPortalError('Access Denied: Staff members must sign in via the User Login Portal.');
+        toast.error('Access Denied: Staff members must sign in via the User Login Portal.');
         dispatch(logout());
       }
     }
@@ -47,7 +49,16 @@ export const AdminLoginPage: React.FC = () => {
     }
 
     setErrors({});
-    dispatch(loginUser({ email, password }));
+    const result = await dispatch(loginUser({ email, password }));
+    if (loginUser.fulfilled.match(result)) {
+      if (result.payload.user.role === ROLES.ADMIN) {
+        toast.success('Admin login successful!');
+      } else {
+        toast.error('Access Denied: Staff members must sign in via the User Login Portal.');
+      }
+    } else if (loginUser.rejected.match(result)) {
+      toast.error((result.payload as string) || 'Admin login failed.');
+    }
   };
 
   const fillQuickCredentials = (userEmail: string, userPass: string) => {

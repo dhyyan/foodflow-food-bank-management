@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Box, Calendar, AlertCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { Modal } from '../../../components/common/Modal/Modal';
 import { Input } from '../../../components/common/Input/Input';
 import { Select } from '../../../components/common/Select/Select';
@@ -143,9 +144,12 @@ export const CreateDonationModal: React.FC<CreateDonationModalProps> = ({
 
     const result = await dispatch(createDonation(payload));
     if (createDonation.fulfilled.match(result)) {
+      toast.success(`Donation intake submitted successfully with ${lines.length} inventory lot(s)!`);
       dispatch(resetCreateSuccess());
       if (onSuccess) onSuccess();
       onClose();
+    } else if (createDonation.rejected.match(result)) {
+      toast.error((result.payload as string) || 'Failed to submit donation intake');
     }
   };
 
