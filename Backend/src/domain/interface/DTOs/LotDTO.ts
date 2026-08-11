@@ -57,6 +57,16 @@ export interface LotEventDTO {
   timestamp: string;
 }
 
+export interface LotTraceDistributionDTO {
+  distributionId: string;
+  distributionNumber: string;
+  recipientName: string;
+  quantity: number;
+  status: string;
+  reservedAt?: string;
+  completedAt?: string;
+}
+
 export interface LotTraceResponseDTO {
   lot: LotResponseDTO;
   donation?: {
@@ -68,4 +78,5 @@ export interface LotTraceResponseDTO {
     status: string;
   };
   timeline: LotEventDTO[];
+  distributions: LotTraceDistributionDTO[];
 }

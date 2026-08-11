@@ -2,13 +2,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.lotController = void 0;
 const donationInject_1 = require("./donationInject");
+const ReservationRepository_1 = require("../../adapters/repository/distribution/ReservationRepository");
+const DistributionRepository_1 = require("../../adapters/repository/distribution/DistributionRepository");
 const GetLotsUseCase_1 = require("../../useCase/lot/GetLotsUseCase");
 const GetLotByIdUseCase_1 = require("../../useCase/lot/GetLotByIdUseCase");
 const TransitionLotStatusUseCase_1 = require("../../useCase/lot/TransitionLotStatusUseCase");
 const GetLotTraceUseCase_1 = require("../../useCase/lot/GetLotTraceUseCase");
 const LotController_1 = require("../../adapters/controllers/lot/LotController");
+const reservationRepository = new ReservationRepository_1.ReservationRepository();
+const distributionRepository = new DistributionRepository_1.DistributionRepository();
 const getLotsUseCase = new GetLotsUseCase_1.GetLotsUseCase(donationInject_1.lotRepository);
 const getLotByIdUseCase = new GetLotByIdUseCase_1.GetLotByIdUseCase(donationInject_1.lotRepository);
 const transitionLotStatusUseCase = new TransitionLotStatusUseCase_1.TransitionLotStatusUseCase(donationInject_1.lotRepository, donationInject_1.lotEventRepository);
-const getLotTraceUseCase = new GetLotTraceUseCase_1.GetLotTraceUseCase(donationInject_1.lotRepository, donationInject_1.lotEventRepository, donationInject_1.donationRepository);
+const getLotTraceUseCase = new GetLotTraceUseCase_1.GetLotTraceUseCase(donationInject_1.lotRepository, donationInject_1.lotEventRepository, donationInject_1.donationRepository, reservationRepository, distributionRepository);
 exports.lotController = new LotController_1.LotController(getLotsUseCase, getLotByIdUseCase, transitionLotStatusUseCase, getLotTraceUseCase);

@@ -9,9 +9,8 @@ class Distribution {
     recipientType;
     items;
     status;
-    reservations;
-    createdBy;
     notes;
+    createdBy;
     reservedAt;
     completedAt;
     createdAt;
@@ -20,19 +19,14 @@ class Distribution {
         this.id = props.id;
         this.distributionNumber = props.distributionNumber;
         this.recipientId = props.recipientId;
-        this.recipientName = props.recipientName.trim();
+        this.recipientName = props.recipientName;
         this.recipientType = props.recipientType;
-        this.items = props.items.map((item) => ({
-            itemName: item.itemName.trim(),
-            requestedQuantity: item.requestedQuantity,
-            unit: item.unit ? item.unit.trim() : 'units'
-        }));
-        this.status = props.status || 'pending';
-        this.reservations = props.reservations;
+        this.items = props.items;
+        this.status = props.status;
+        this.notes = props.notes;
         this.createdBy = props.createdBy;
-        this.notes = props.notes ? props.notes.trim() : undefined;
-        this.reservedAt = props.reservedAt ? new Date(props.reservedAt) : undefined;
-        this.completedAt = props.completedAt ? new Date(props.completedAt) : undefined;
+        this.reservedAt = props.reservedAt;
+        this.completedAt = props.completedAt;
         this.createdAt = props.createdAt;
         this.updatedAt = props.updatedAt;
     }

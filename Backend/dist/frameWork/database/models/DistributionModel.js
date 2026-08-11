@@ -35,75 +35,33 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DistributionModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+const DistributionItemSchema = new mongoose_1.Schema({
+    itemName: { type: String, required: true },
+    requestedQuantity: { type: Number, required: true, min: 1 },
+    unit: { type: String, required: true }
+}, { _id: false });
 const DistributionSchema = new mongoose_1.Schema({
-    distributionNumber: {
-        type: String,
-        required: [true, 'Distribution number is required'],
-        unique: true,
-        index: true
-    },
-    recipientId: {
-        type: mongoose_1.Schema.Types.Mixed,
-        required: [true, 'Recipient ID is required'],
-        index: true
-    },
-    recipientName: {
-        type: String,
-        required: [true, 'Recipient name is required'],
-        trim: true
-    },
-    recipientType: {
-        type: String,
-        enum: ['family', 'agency'],
-        required: [true, 'Recipient type is required'],
-        index: true
-    },
-    items: [
-        {
-            itemName: {
-                type: String,
-                required: [true, 'Item name is required'],
-                trim: true
-            },
-            requestedQuantity: {
-                type: Number,
-                required: [true, 'Requested quantity is required'],
-                min: [1, 'Requested quantity must be at least 1']
-            },
-            unit: {
-                type: String,
-                default: 'units',
-                trim: true
-            }
-        }
-    ],
-    status: {
-        type: String,
-        enum: ['pending', 'reserved', 'completed', 'cancelled'],
-        default: 'pending',
-        index: true
-    },
+    distributionNumber: { type: String, required: true, unique: true },
+    recipientId: { type: String, required: true },
+    recipientName: { type: String, required: true },
+    recipientType: { type: String, required: true, enum: ['agency', 'family'] },
+    items: [DistributionItemSchema],
+    status: { type: String, required: true, enum: ['pending', 'reserved', 'completed', 'cancelled'], default: 'pending' },
+    notes: { type: String },
     createdBy: {
-        id: {
-            type: mongoose_1.Schema.Types.Mixed,
-            required: true
-        },
-        name: {
-            type: String,
-            required: true
-        }
+        id: { type: String, required: true },
+        name: { type: String, required: true }
     },
-    notes: {
-        type: String,
-        trim: true
-    },
-    reservedAt: {
-        type: Date
-    },
-    completedAt: {
-        type: Date
-    }
+    reservedAt: { type: Date },
+    completedAt: { type: Date }
 }, {
     timestamps: true
+});
+DistributionSchema.set('toJSON', {
+    virtuals: true,
+    versionKey: false,
+    transform: function (_doc, ret) {
+        delete ret._id;
+    },
 });
 exports.DistributionModel = mongoose_1.default.model('Distribution', DistributionSchema);

@@ -1,7 +1,9 @@
 import { ILotRepository } from '../../domain/interface/repositoryInterface/ILotRepository';
 import { ILotEventRepository } from '../../domain/interface/repositoryInterface/ILotEventRepository';
 import { IDonationRepository } from '../../domain/interface/repositoryInterface/IDonationRepository';
-import { LotTraceResponseDTO, LotEventDTO, LotResponseDTO } from '../../domain/interface/DTOs/LotDTO';
+import { IReservationRepository } from '../../domain/interface/repositoryInterface/IReservationRepository';
+import { IDistributionRepository } from '../../domain/interface/repositoryInterface/IDistributionRepository';
+import { LotTraceResponseDTO, LotEventDTO, LotResponseDTO, LotTraceDistributionDTO } from '../../domain/interface/DTOs/LotDTO';
 import { NotFoundError } from '../../shared/errors/AppError';
 
 export interface IGetLotTraceUseCase {
@@ -12,7 +14,9 @@ export class GetLotTraceUseCase implements IGetLotTraceUseCase {
   constructor(
     private readonly lotRepository: ILotRepository,
     private readonly lotEventRepository: ILotEventRepository,
-    private readonly donationRepository: IDonationRepository
+    private readonly donationRepository: IDonationRepository,
+    private readonly reservationRepository: IReservationRepository,
+    private readonly distributionRepository: IDistributionRepository
   ) {}
 
   async execute(lotId: string): Promise<LotTraceResponseDTO> {
@@ -21,9 +25,10 @@ export class GetLotTraceUseCase implements IGetLotTraceUseCase {
       throw new NotFoundError(`Lot with identifier '${lotId}' was not found`);
     }
 
-    const [events, donation] = await Promise.all([
+    const [events, donation, reservations] = await Promise.all([
       this.lotEventRepository.findByLotId(lot.id!),
-      lot.donationId ? this.donationRepository.findById(lot.donationId) : Promise.resolve(null)
+      lot.donationId ? this.donationRepository.findById(lot.donationId) : Promise.resolve(null),
+      this.reservationRepository.findByLotId(lot.id!)
     ]);
 
     const lotDTO: LotResponseDTO = {
@@ -89,7 +94,7 @@ export class GetLotTraceUseCase implements IGetLotTraceUseCase {
       });
     }
 
-    return {
+    const result: LotTraceResponseDTO = {
       lot: lotDTO,
       donation: donation
         ? {
@@ -101,7 +106,37 @@ export class GetLotTraceUseCase implements IGetLotTraceUseCase {
             status: donation.status
           }
         : undefined,
-      timeline: timelineDTOs
+      timeline: timelineDTOs,
+      distributions: []
     };
+
+    // Fetch associated distributions
+    if (reservations.length > 0) {
+      const distributionIds = Array.from(new Set(reservations.map(r => r.distributionId)));
+      const distributions = await Promise.all(
+        distributionIds.map(id => this.distributionRepository.findById(id))
+      );
+
+      const distributionDTOs: LotTraceDistributionDTO[] = [];
+      for (const res of reservations) {
+        const dist = distributions.find(d => d && d.id === res.distributionId);
+        if (dist) {
+          distributionDTOs.push({
+            distributionId: dist.id!,
+            distributionNumber: dist.distributionNumber,
+            recipientName: dist.recipientName,
+            quantity: res.quantity,
+            status: dist.status,
+            reservedAt: dist.reservedAt ? dist.reservedAt.toISOString() : undefined,
+            completedAt: dist.completedAt ? dist.completedAt.toISOString() : undefined
+          });
+        }
+      }
+      result.distributions = distributionDTOs.sort((a, b) => 
+        (b.reservedAt || '').localeCompare(a.reservedAt || '')
+      );
+    }
+
+    return result;
   }
 }

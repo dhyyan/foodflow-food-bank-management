@@ -18,10 +18,10 @@ class Reservation {
         this.distributionId = props.distributionId;
         this.lotId = props.lotId;
         this.lotNumber = props.lotNumber;
-        this.itemName = props.itemName.trim();
+        this.itemName = props.itemName;
         this.quantity = props.quantity;
-        this.unit = props.unit.trim();
-        this.status = props.status || 'reserved';
+        this.unit = props.unit;
+        this.status = props.status;
         this.createdBy = props.createdBy;
         this.createdAt = props.createdAt;
         this.updatedAt = props.updatedAt;

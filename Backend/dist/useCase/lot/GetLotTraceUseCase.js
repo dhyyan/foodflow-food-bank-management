@@ -6,19 +6,24 @@ class GetLotTraceUseCase {
     lotRepository;
     lotEventRepository;
     donationRepository;
-    constructor(lotRepository, lotEventRepository, donationRepository) {
+    reservationRepository;
+    distributionRepository;
+    constructor(lotRepository, lotEventRepository, donationRepository, reservationRepository, distributionRepository) {
         this.lotRepository = lotRepository;
         this.lotEventRepository = lotEventRepository;
         this.donationRepository = donationRepository;
+        this.reservationRepository = reservationRepository;
+        this.distributionRepository = distributionRepository;
     }
     async execute(lotId) {
         const lot = await this.lotRepository.findById(lotId);
         if (!lot) {
             throw new AppError_1.NotFoundError(`Lot with identifier '${lotId}' was not found`);
         }
-        const [events, donation] = await Promise.all([
+        const [events, donation, reservations] = await Promise.all([
             this.lotEventRepository.findByLotId(lot.id),
-            lot.donationId ? this.donationRepository.findById(lot.donationId) : Promise.resolve(null)
+            lot.donationId ? this.donationRepository.findById(lot.donationId) : Promise.resolve(null),
+            this.reservationRepository.findByLotId(lot.id)
         ]);
         const lotDTO = {
             id: lot.id,
@@ -79,7 +84,7 @@ class GetLotTraceUseCase {
                 timestamp: lot.receivedDate ? lot.receivedDate.toISOString() : (lot.createdAt ? lot.createdAt.toISOString() : new Date().toISOString())
             });
         }
-        return {
+        const result = {
             lot: lotDTO,
             donation: donation
                 ? {
@@ -91,8 +96,31 @@ class GetLotTraceUseCase {
                     status: donation.status
                 }
                 : undefined,
-            timeline: timelineDTOs
+            timeline: timelineDTOs,
+            distributions: []
         };
+        // Fetch associated distributions
+        if (reservations.length > 0) {
+            const distributionIds = Array.from(new Set(reservations.map(r => r.distributionId)));
+            const distributions = await Promise.all(distributionIds.map(id => this.distributionRepository.findById(id)));
+            const distributionDTOs = [];
+            for (const res of reservations) {
+                const dist = distributions.find(d => d && d.id === res.distributionId);
+                if (dist) {
+                    distributionDTOs.push({
+                        distributionId: dist.id,
+                        distributionNumber: dist.distributionNumber,
+                        recipientName: dist.recipientName,
+                        quantity: res.quantity,
+                        status: dist.status,
+                        reservedAt: dist.reservedAt ? dist.reservedAt.toISOString() : undefined,
+                        completedAt: dist.completedAt ? dist.completedAt.toISOString() : undefined
+                    });
+                }
+            }
+            result.distributions = distributionDTOs.sort((a, b) => (b.reservedAt || '').localeCompare(a.reservedAt || ''));
+        }
+        return result;
     }
 }
 exports.GetLotTraceUseCase = GetLotTraceUseCase;

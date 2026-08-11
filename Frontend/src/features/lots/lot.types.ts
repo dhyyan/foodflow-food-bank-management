@@ -47,6 +47,16 @@ export interface LotEventItem {
   timestamp: string;
 }
 
+export interface LotTraceDistribution {
+  distributionId: string;
+  distributionNumber: string;
+  recipientName: string;
+  quantity: number;
+  status: string;
+  reservedAt?: string;
+  completedAt?: string;
+}
+
 export interface LotTraceResponse {
   lot: LotItem;
   donation?: {
@@ -58,6 +68,7 @@ export interface LotTraceResponse {
     status: string;
   };
   timeline: LotEventItem[];
+  distributions: LotTraceDistribution[];
 }
 
 export interface LotFilterParams {

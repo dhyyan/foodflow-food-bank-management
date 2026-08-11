@@ -36,54 +36,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReservationModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const ReservationSchema = new mongoose_1.Schema({
-    distributionId: {
-        type: mongoose_1.Schema.Types.Mixed,
-        required: [true, 'Distribution ID is required'],
-        index: true
-    },
-    lotId: {
-        type: mongoose_1.Schema.Types.Mixed,
-        required: [true, 'Lot ID is required'],
-        index: true
-    },
-    lotNumber: {
-        type: String,
-        required: [true, 'Lot number is required'],
-        index: true
-    },
-    itemName: {
-        type: String,
-        required: [true, 'Item name is required'],
-        trim: true,
-        index: true
-    },
-    quantity: {
-        type: Number,
-        required: [true, 'Quantity is required'],
-        min: [1, 'Quantity must be at least 1']
-    },
-    unit: {
-        type: String,
-        required: [true, 'Unit is required'],
-        trim: true
-    },
-    status: {
-        type: String,
-        enum: ['reserved', 'released', 'cancelled'],
-        default: 'reserved',
-        index: true
-    },
+    distributionId: { type: String, required: true, index: true },
+    lotId: { type: String, required: true, index: true },
+    lotNumber: { type: String, required: true },
+    itemName: { type: String, required: true },
+    quantity: { type: Number, required: true, min: 1 },
+    unit: { type: String, required: true },
+    status: { type: String, required: true, enum: ['reserved', 'released', 'cancelled'], default: 'reserved' },
     createdBy: {
-        id: {
-            type: mongoose_1.Schema.Types.Mixed,
-            required: true
-        },
-        name: {
-            type: String,
-            required: true
-        }
+        id: { type: String, required: true },
+        name: { type: String, required: true }
     }
 }, {
     timestamps: true
+});
+ReservationSchema.set('toJSON', {
+    virtuals: true,
+    versionKey: false,
+    transform: function (_doc, ret) {
+        delete ret._id;
+    },
 });
 exports.ReservationModel = mongoose_1.default.model('Reservation', ReservationSchema);

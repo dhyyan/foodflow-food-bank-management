@@ -30,6 +30,7 @@ export const LotTraceModal: React.FC<LotTraceModalProps> = ({ isOpen, onClose, l
   const currentLot = selectedTrace?.lot || lot;
   const donation = selectedTrace?.donation;
   const timeline = selectedTrace?.timeline || [];
+  const distributions = selectedTrace?.distributions || [];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Traceability Journey — Lot #${currentLot.lotNumber}`} maxWidth="720px">
@@ -176,6 +177,44 @@ export const LotTraceModal: React.FC<LotTraceModalProps> = ({ isOpen, onClose, l
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Distributions Table */}
+        {!traceLoading && distributions.length > 0 && (
+          <div style={{ marginTop: '1rem' }}>
+            <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.75rem', paddingLeft: '0.5rem' }}>
+              Fulfillment History
+            </h4>
+            <div style={{
+              backgroundColor: '#ffffff',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-default)',
+              overflow: 'hidden'
+            }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
+                <thead style={{ backgroundColor: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-default)' }}>
+                  <tr>
+                    <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-muted)' }}>Distribution #</th>
+                    <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-muted)' }}>Recipient</th>
+                    <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-muted)' }}>Quantity</th>
+                    <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-muted)' }}>Status</th>
+                    <th style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-muted)' }}>Reserved At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {distributions.map((dist, idx) => (
+                    <tr key={idx} style={{ borderBottom: idx !== distributions.length - 1 ? '1px solid var(--border-light)' : 'none' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-main)' }}>{dist.distributionNumber}</td>
+                      <td style={{ padding: '0.75rem 1rem', color: 'var(--text-main)' }}>{dist.recipientName}</td>
+                      <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: 'var(--text-main)' }}>{dist.quantity}</td>
+                      <td style={{ padding: '0.75rem 1rem' }}><StatusBadge status={dist.status} size="sm" /></td>
+                      <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)' }}>{dist.reservedAt ? formatDate(dist.reservedAt) : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
