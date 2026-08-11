@@ -131,7 +131,7 @@ export const AdminLoginPage: React.FC = () => {
         {(error || portalError) && <ErrorState message={portalError || error || 'Authentication error'} />}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+        <form noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
           <Input
             label="Email Address"
             type="email"
