@@ -2,7 +2,7 @@ import { UserModel } from '../models/UserModel';
 import { PasswordService } from '../../service/password/PasswordService';
 import { UserRole } from '../../../domain/entities/User';
 
-export const seedInitialAdmin = async () => {
+export const seedInitialAdmin = async (): Promise<void> => {
   try {
     const passwordService = new PasswordService();
 
@@ -12,7 +12,6 @@ export const seedInitialAdmin = async () => {
     if (!existingAdmin) {
       const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'Admin@123456';
       const passwordHash = await passwordService.hash(defaultPassword);
-
       await UserModel.create({
         name: 'System Admin',
         email: adminEmail,
