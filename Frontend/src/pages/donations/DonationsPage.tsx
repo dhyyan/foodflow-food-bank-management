@@ -13,6 +13,7 @@ import { fetchDonations } from '../../features/donations/donationSlice';
 import type { DonationRecord } from '../../features/donations/donation.types';
 import { CreateDonationModal } from '../../features/donations/components/CreateDonationModal';
 import { DonationDetailsModal } from '../../features/donations/components/DonationDetailsModal';
+import { AIManifestParserModal } from '../../features/ai/components/AIManifestParserModal';
 
 const DONOR_FILTER_OPTIONS = [
   { value: 'all', label: 'All Donor Types' },
@@ -32,6 +33,7 @@ export const DonationsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [donorTypeFilter, setDonorTypeFilter] = useState('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [selectedDonationId, setSelectedDonationId] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -128,7 +130,7 @@ export const DonationsPage: React.FC = () => {
           <Button
             variant="outline"
             leftIcon={<Sparkles size={16} />}
-            onClick={() => alert('AI Manifest Parser is queued for phase 2 setup.')}
+            onClick={() => setIsAIModalOpen(true)}
           >
             AI Manifest Parser
           </Button>
@@ -204,6 +206,13 @@ export const DonationsPage: React.FC = () => {
           emptyMessage="No donation records found. Click 'New Donation Intake' to record a donation."
         />
       )}
+
+      {/* Modal: AI Manifest Parser */}
+      <AIManifestParserModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        onSuccess={handleRefresh}
+      />
 
       {/* Modal: New Donation Intake */}
       <CreateDonationModal
