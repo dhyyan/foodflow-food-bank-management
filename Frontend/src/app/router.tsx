@@ -13,6 +13,7 @@ import { NotFoundPage } from '../pages/error/NotFoundPage';
 import { ServerErrorPage } from '../pages/error/ServerErrorPage';
 import { BadRequestPage } from '../pages/error/BadRequestPage';
 import { ErrorElementPage } from '../pages/error/ErrorElementPage';
+import ItemCatalogPage from '../pages/items/ItemCatalogPage';
 
 export const router = createBrowserRouter([
   {
@@ -61,6 +62,10 @@ export const router = createBrowserRouter([
           {
             path: ROUTES.LOTS,
             element: <LotsPage />
+          },
+          {
+            path: ROUTES.CATALOG,
+            element: <ItemCatalogPage />
           }
         ]
       },

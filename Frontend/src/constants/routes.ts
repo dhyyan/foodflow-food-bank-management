@@ -9,5 +9,6 @@ export const ROUTES = {
   DISTRIBUTIONS: '/distributions',
   NOT_FOUND: '/404',
   SERVER_ERROR: '/500',
-  BAD_REQUEST: '/400'
+  BAD_REQUEST: '/400',
+  CATALOG: '/catalog'
 } as const;
