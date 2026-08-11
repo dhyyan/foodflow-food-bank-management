@@ -6,19 +6,22 @@ import {
     Boxes,
     Truck,
     LogOut,
-    ShieldCheck
+    ShieldCheck,
+    Bell
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { ROUTES } from '../../../constants/routes';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { logout } from '../../../features/auth/authSlice';
 import { ROLES, ROLE_LABELS } from '../../../constants/roles';
+import { NotificationCenterModal } from '../../../features/notifications/components/NotificationCenterModal';
 
 import logoImg from '../../../assets/876fb4c9ef2542f1c3eceee921a9a9fb.jpg';
 
 export const Sidebar: React.FC = () => {
     const dispatch = useAppDispatch();
     const { user } = useAppSelector((state) => state.auth);
+    const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
 
     const handleLogout = () => {
         dispatch(logout());
@@ -114,6 +117,31 @@ export const Sidebar: React.FC = () => {
                 })}
             </div>
 
+            {/* Email Notification Hub Trigger */}
+            <div style={{ padding: '0 1rem 0.75rem' }}>
+                <button
+                    onClick={() => setIsNotificationOpen(true)}
+                    style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.65rem',
+                        padding: '0.65rem 0.85rem',
+                        borderRadius: 'var(--radius-md)',
+                        backgroundColor: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        color: '#1e40af',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                    }}
+                >
+                    <Bell size={18} style={{ color: '#2563eb' }} />
+                    <span>Email Notification Hub</span>
+                </button>
+            </div>
+
             {/* User Footer Profile */}
             <div
                 style={{
@@ -172,6 +200,11 @@ export const Sidebar: React.FC = () => {
                     Sign Out
                 </button>
             </div>
+
+            <NotificationCenterModal
+                isOpen={isNotificationOpen}
+                onClose={() => setIsNotificationOpen(false)}
+            />
         </aside>
     );
 };
