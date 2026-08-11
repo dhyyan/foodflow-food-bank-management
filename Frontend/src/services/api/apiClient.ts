@@ -29,7 +29,8 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('foodflow_token');
       localStorage.removeItem('foodflow_user');
-      if (window.location.pathname !== '/login') {
+      const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/admin/login';
+      if (!isAuthPage) {
         window.location.href = '/login';
       }
     }

@@ -13,3 +13,19 @@ export const ROLE_LABELS: Record<UserRoleType, string> = {
   [ROLES.STOCK_MANAGER]: 'Stock Manager',
   [ROLES.HANDOUT_COORDINATOR]: 'Handout Coordinator'
 };
+
+export const getRoleDefaultRoute = (role?: string): string => {
+  switch (role) {
+    case ROLES.ADMIN:
+      return '/dashboard';
+    case ROLES.DONATION_CLERK:
+      return '/donations';
+    case ROLES.STOCK_MANAGER:
+      return '/lots';
+    case ROLES.HANDOUT_COORDINATOR:
+      return '/distributions';
+    default:
+      return '/login';
+  }
+};
+
