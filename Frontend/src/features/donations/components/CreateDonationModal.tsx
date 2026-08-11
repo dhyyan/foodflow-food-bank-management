@@ -161,7 +161,7 @@ export const CreateDonationModal: React.FC<CreateDonationModalProps> = ({
       subtitle="Record incoming food donation and automatically generate initial Inventory Lots"
       maxWidth="840px"
     >
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <form noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {(formError || error) && (
           <div
             style={{

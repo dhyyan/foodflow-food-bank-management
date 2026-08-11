@@ -102,7 +102,7 @@ export const LotStatusTransitionModal: React.FC<LotStatusTransitionModalProps> =
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Transition State — Lot #${lot.lotNumber}`} maxWidth="540px">
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <form noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {/* State Banner */}
         <div
           style={{

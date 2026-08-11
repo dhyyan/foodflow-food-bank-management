@@ -198,7 +198,7 @@ export const UserManagementPage: React.FC = () => {
       >
         {error && <ErrorState message={error} />}
 
-        <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem', marginTop: error ? '1rem' : 0 }}>
+        <form noValidate onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem', marginTop: error ? '1rem' : 0 }}>
           <Input
             label="Full Name"
             placeholder="e.g. Sarah Jenkins"

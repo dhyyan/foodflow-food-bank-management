@@ -143,7 +143,7 @@ export const CreateDistributionModal: React.FC<CreateDistributionModalProps> = (
       subtitle="Request food handout items for a registered family or agency partner"
       maxWidth="720px"
     >
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <form noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {(formError || error) && (
           <div
             style={{

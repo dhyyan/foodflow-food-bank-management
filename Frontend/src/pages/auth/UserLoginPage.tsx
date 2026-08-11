@@ -118,7 +118,7 @@ export const UserLoginPage: React.FC = () => {
         {error && <ErrorState message={error} />}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+        <form noValidate onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
           <Input
             label="Email Address"
             type="email"

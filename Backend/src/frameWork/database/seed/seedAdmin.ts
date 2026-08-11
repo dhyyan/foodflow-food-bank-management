@@ -55,7 +55,7 @@ export const seedInitialAdmin = async (): Promise<void> => {
           role: staff.role,
           isActive: true
         });
-        console.log(`[Seed] Created staff user: ${staff.email}`);
+        // console.log(`[Seed] Created staff user: ${staff.email}`);
       }
     }
   } catch (error) {
