@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build & compiled output
+dist/
+build/
+
+# Environment configuration
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS & IDE metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# Uploads & Temp files
+uploads/
+tmp/
+temp/

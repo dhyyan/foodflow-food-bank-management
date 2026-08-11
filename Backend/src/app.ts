@@ -5,6 +5,8 @@ import authRoutes from './frameWork/routes/authRoutes';
 import donationRoutes from './frameWork/routes/donationRoutes';
 import lotRoutes from './frameWork/routes/lotRoutes';
 import aiRoutes from './frameWork/routes/aiRoutes';
+import recipientRoutes from './frameWork/routes/recipientRoutes';
+import distributionRoutes from './frameWork/routes/distributionRoutes';
 import { errorHandler } from './adapters/middlewares/error/errorMiddleware';
 
 dotenv.config();
@@ -29,6 +31,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/lots', lotRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/recipients', recipientRoutes);
+app.use('/api/distributions', distributionRoutes);
 
 // Centralized Error Handling Middleware
 app.use(errorHandler);
