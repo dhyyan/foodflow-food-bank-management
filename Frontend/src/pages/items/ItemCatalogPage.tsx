@@ -39,7 +39,14 @@ const ItemCatalogPage: React.FC = () => {
       header: 'Item Name & Category',
       render: (item) => (
         <div>
-          <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{item.name}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{item.name}</span>
+            {item.isPerishable && (
+              <span style={{ fontSize: '0.65rem', backgroundColor: '#fee2e2', color: '#991b1b', padding: '0.1rem 0.35rem', borderRadius: '4px', fontWeight: 600 }}>
+                Perishable
+              </span>
+            )}
+          </div>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{item.category}</span>
         </div>
       )

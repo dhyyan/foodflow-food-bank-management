@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.itemController = void 0;
+const ItemRepository_1 = require("../../adapters/repository/item/ItemRepository");
+const CreateItemUseCase_1 = require("../../useCase/item/CreateItemUseCase");
+const UpdateItemUseCase_1 = require("../../useCase/item/UpdateItemUseCase");
+const GetItemsUseCase_1 = require("../../useCase/item/GetItemsUseCase");
+const GetItemByIdUseCase_1 = require("../../useCase/item/GetItemByIdUseCase");
+const DeleteItemUseCase_1 = require("../../useCase/item/DeleteItemUseCase");
+const ItemController_1 = require("../../adapters/controllers/item/ItemController");
+const itemRepository = new ItemRepository_1.ItemRepository();
+const createItemUseCase = new CreateItemUseCase_1.CreateItemUseCase(itemRepository);
+const updateItemUseCase = new UpdateItemUseCase_1.UpdateItemUseCase(itemRepository);
+const getItemsUseCase = new GetItemsUseCase_1.GetItemsUseCase(itemRepository);
+const getItemByIdUseCase = new GetItemByIdUseCase_1.GetItemByIdUseCase(itemRepository);
+const deleteItemUseCase = new DeleteItemUseCase_1.DeleteItemUseCase(itemRepository);
+exports.itemController = new ItemController_1.ItemController(createItemUseCase, updateItemUseCase, getItemsUseCase, getItemByIdUseCase, deleteItemUseCase);

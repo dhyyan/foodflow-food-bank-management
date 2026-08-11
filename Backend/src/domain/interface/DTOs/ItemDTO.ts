@@ -2,6 +2,7 @@ export interface CreateItemDTO {
   name: string;
   category: string;
   unit: string;
+  isPerishable: boolean;
   shelfLifeDays: number;
 }
 
@@ -9,6 +10,7 @@ export interface UpdateItemDTO {
   name?: string;
   category?: string;
   unit?: string;
+  isPerishable?: boolean;
   shelfLifeDays?: number;
 }
 
@@ -17,6 +19,7 @@ export interface ItemResponseDTO {
   name: string;
   category: string;
   unit: string;
+  isPerishable: boolean;
   shelfLifeDays: number;
   createdAt: Date;
   updatedAt: Date;

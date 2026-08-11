@@ -8,6 +8,7 @@ const ItemSchema: Schema = new Schema(
     name: { type: String, required: true },
     category: { type: String, required: true },
     unit: { type: String, required: true },
+    isPerishable: { type: Boolean, required: true },
     shelfLifeDays: { type: Number, required: true },
   },
   {

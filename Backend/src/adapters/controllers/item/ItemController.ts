@@ -22,11 +22,12 @@ export class ItemController {
         name: req.body.name,
         category: req.body.category,
         unit: req.body.unit,
+        isPerishable: req.body.isPerishable,
         shelfLifeDays: req.body.shelfLifeDays,
       };
 
-      if (!dto.name || !dto.category || !dto.unit || dto.shelfLifeDays === undefined) {
-        throw new BadRequestError('Missing required fields (name, category, unit, shelfLifeDays)');
+      if (!dto.name || !dto.category || !dto.unit || dto.isPerishable === undefined || dto.shelfLifeDays === undefined) {
+        throw new BadRequestError('Missing required fields (name, category, unit, isPerishable, shelfLifeDays)');
       }
 
       const item = await this.createItemUseCase.execute(dto);

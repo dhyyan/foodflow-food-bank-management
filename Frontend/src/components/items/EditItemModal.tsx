@@ -45,14 +45,15 @@ const EditItemModal: React.FC<Props> = ({ item, onClose }) => {
     name: item.name,
     category: item.category,
     unit: item.unit,
+    isPerishable: item.isPerishable,
     shelfLifeDays: item.shelfLifeDays,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target as HTMLInputElement;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'shelfLifeDays' ? parseInt(value) || 0 : value
+      [name]: type === 'checkbox' ? checked : name === 'shelfLifeDays' ? parseInt(value) || 0 : value
     }));
   };
 
@@ -134,6 +135,20 @@ const EditItemModal: React.FC<Props> = ({ item, onClose }) => {
               onChange={handleChange}
               required
             />
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <input
+              type="checkbox"
+              id="isPerishable"
+              name="isPerishable"
+              checked={formData.isPerishable}
+              onChange={handleChange}
+              style={{ width: '1rem', height: '1rem', cursor: 'pointer' }}
+            />
+            <label htmlFor="isPerishable" style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-main)', cursor: 'pointer' }}>
+              Is this item perishable?
+            </label>
           </div>
         </div>
 

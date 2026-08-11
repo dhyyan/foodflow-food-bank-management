@@ -10,6 +10,7 @@ const authRoutes_1 = __importDefault(require("./frameWork/routes/authRoutes"));
 const donationRoutes_1 = __importDefault(require("./frameWork/routes/donationRoutes"));
 const lotRoutes_1 = __importDefault(require("./frameWork/routes/lotRoutes"));
 const aiRoutes_1 = __importDefault(require("./frameWork/routes/aiRoutes"));
+const itemRoutes_1 = __importDefault(require("./frameWork/routes/itemRoutes"));
 const errorMiddleware_1 = require("./adapters/middlewares/error/errorMiddleware");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes_1.default);
 app.use('/api/donations', donationRoutes_1.default);
 app.use('/api/lots', lotRoutes_1.default);
 app.use('/api/ai', aiRoutes_1.default);
+app.use('/api/items', itemRoutes_1.default);
 // Centralized Error Handling Middleware
 app.use(errorMiddleware_1.errorHandler);
 exports.default = app;

@@ -41,6 +41,7 @@ export class ItemRepository implements IItemRepository {
       name: doc.name,
       category: doc.category,
       unit: doc.unit,
+      isPerishable: doc.isPerishable,
       shelfLifeDays: doc.shelfLifeDays,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
