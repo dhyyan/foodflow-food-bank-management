@@ -7,6 +7,7 @@ const User_1 = require("../../../domain/entities/User");
 const seedInitialAdmin = async () => {
     try {
         const passwordService = new PasswordService_1.PasswordService();
+        // Seed default admin if missing
         const adminCount = await UserModel_1.UserModel.countDocuments({ role: User_1.UserRole.ADMIN });
         if (adminCount === 0) {
             const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'Admin@123456';
