@@ -2,14 +2,15 @@ import { UserModel } from '../models/UserModel';
 import { PasswordService } from '../../service/password/PasswordService';
 import { UserRole } from '../../../domain/entities/User';
 
-export const seedInitialAdmin = async () => {
+export const seedInitialAdmin = async (): Promise<void> => {
   try {
     const passwordService = new PasswordService();
+
+    // Seed default admin if missing
     const adminCount = await UserModel.countDocuments({ role: UserRole.ADMIN });
     if (adminCount === 0) {
       const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'Admin@123456';
       const passwordHash = await passwordService.hash(defaultPassword);
-
       await UserModel.create({
         name: 'System Admin',
         email: 'admin@foodflow.org',
@@ -17,7 +18,6 @@ export const seedInitialAdmin = async () => {
         role: UserRole.ADMIN,
         isActive: true
       });
-
       console.log('[Seed] Initial Admin created: admin@foodflow.org');
     }
 
@@ -57,4 +57,3 @@ export const seedInitialAdmin = async () => {
     console.error('[Seed Error] Failed to seed initial users:', error);
   }
 };
-
