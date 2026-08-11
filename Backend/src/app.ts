@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './frameWork/routes/authRoutes';
 import donationRoutes from './frameWork/routes/donationRoutes';
 import lotRoutes from './frameWork/routes/lotRoutes';
+import aiRoutes from './frameWork/routes/aiRoutes';
 import { errorHandler } from './adapters/middlewares/error/errorMiddleware';
 
 dotenv.config();
@@ -27,6 +28,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/lots', lotRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Centralized Error Handling Middleware
 app.use(errorHandler);
