@@ -40,6 +40,15 @@ export class TransitionLotStatusUseCase implements ITransitionLotStatusUseCase {
       throw new BadRequestError(`Lot is already in '${currentStatus}' status`);
     }
 
+    // Enforce expiry rule: An expired lot can only be discarded
+    if (lot.effectiveExpiryDate && new Date(lot.effectiveExpiryDate) < new Date()) {
+      if (targetStatus !== LotStatus.DISCARDED) {
+        throw new BadRequestError(
+          `Lot #${lot.lotNumber} has expired (effective expiry date: ${lot.effectiveExpiryDate.toISOString()}). An expired lot can only be transitioned to the 'discarded' status.`
+        );
+      }
+    }
+
     // Validate state machine transitions
     const isValidTransition = this.validateTransition(currentStatus, targetStatus);
     if (!isValidTransition) {
