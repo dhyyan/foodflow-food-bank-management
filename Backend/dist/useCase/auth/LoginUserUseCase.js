@@ -32,7 +32,8 @@ class LoginUserUseCase {
         const token = this.jwtService.generateToken({
             id: user.id,
             email: user.email,
-            role: user.role
+            role: user.role,
+            name: user.name
         });
         return {
             user: {

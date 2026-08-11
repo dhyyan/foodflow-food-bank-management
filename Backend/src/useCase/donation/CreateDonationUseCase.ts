@@ -1,9 +1,11 @@
 import { IDonationRepository } from '../../domain/interface/repositoryInterface/IDonationRepository';
 import { ILotRepository } from '../../domain/interface/repositoryInterface/ILotRepository';
+import { ILotEventRepository } from '../../domain/interface/repositoryInterface/ILotEventRepository';
 import { CreateDonationDTO, DonationResponseDTO, DonationLineResponseDTO } from '../../domain/interface/DTOs/DonationDTO';
 import { LotResponseDTO } from '../../domain/interface/DTOs/LotDTO';
 import { Donation } from '../../domain/entities/Donation';
 import { Lot, LotStatus } from '../../domain/entities/Lot';
+import { LotEvent } from '../../domain/entities/LotEvent';
 import { BadRequestError } from '../../shared/errors/AppError';
 
 export interface ICreateDonationUseCase {
@@ -17,7 +19,8 @@ export interface ICreateDonationUseCase {
 export class CreateDonationUseCase implements ICreateDonationUseCase {
   constructor(
     private readonly donationRepository: IDonationRepository,
-    private readonly lotRepository: ILotRepository
+    private readonly lotRepository: ILotRepository,
+    private readonly lotEventRepository?: ILotEventRepository
   ) {}
 
   async execute(
@@ -115,7 +118,28 @@ export class CreateDonationUseCase implements ICreateDonationUseCase {
     // 6. Save Lots
     const savedLots = await this.lotRepository.createMany(lotEntities);
 
-    // 7. Map Response DTOs
+    // 7. Save initial Lot Events if repository provided
+    if (this.lotEventRepository && savedLots.length > 0) {
+      const events = savedLots.map(
+        (lot) =>
+          new LotEvent({
+            lotId: lot.id!,
+            eventType: 'LOT_CREATED',
+            previousStatus: undefined,
+            newStatus: LotStatus.RECEIVED,
+            performedBy: {
+              id: clerkId,
+              name: clerkName,
+              role: 'Donation Clerk'
+            },
+            notes: `Lot #${lot.lotNumber} generated from donation intake ${savedDonation.donationNumber}`,
+            timestamp: new Date()
+          })
+      );
+      await this.lotEventRepository.createMany(events);
+    }
+
+    // 8. Map Response DTOs
     const donationResponse: DonationResponseDTO = {
       id: savedDonation.id,
       donationNumber: savedDonation.donationNumber,
@@ -154,6 +178,8 @@ export class CreateDonationUseCase implements ICreateDonationUseCase {
       effectiveExpiryDate: lot.effectiveExpiryDate ? lot.effectiveExpiryDate.toISOString() : undefined,
       donationId: lot.donationId,
       donationLineId: lot.donationLineId,
+      donorName: savedDonation.donorName,
+      donorType: savedDonation.donorType,
       status: lot.status,
       createdBy: lot.createdBy,
       createdAt: lot.createdAt ? lot.createdAt.toISOString() : new Date().toISOString(),

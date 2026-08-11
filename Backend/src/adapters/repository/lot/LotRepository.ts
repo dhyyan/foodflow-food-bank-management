@@ -2,11 +2,12 @@ import { ILotRepository } from '../../../domain/interface/repositoryInterface/IL
 import { Lot, LotStatus } from '../../../domain/entities/Lot';
 import { LotFilterDTO } from '../../../domain/interface/DTOs/LotDTO';
 import { LotModel, ILotDocument } from '../../../frameWork/database/models/LotModel';
+import { DonationModel } from '../../../frameWork/database/models/DonationModel';
 import mongoose from 'mongoose';
 
 export class LotRepository implements ILotRepository {
-  private mapDocumentToEntity(doc: ILotDocument): Lot {
-    return new Lot({
+  private mapDocumentToEntity(doc: ILotDocument, donorInfo?: { donorName?: string; donorType?: string }): Lot {
+    const lot = new Lot({
       id: doc._id.toString(),
       lotNumber: doc.lotNumber,
       itemName: doc.itemName,
@@ -28,6 +29,13 @@ export class LotRepository implements ILotRepository {
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt
     });
+
+    if (donorInfo) {
+      (lot as any).donorName = donorInfo.donorName;
+      (lot as any).donorType = donorInfo.donorType;
+    }
+
+    return lot;
   }
 
   async create(lot: Lot): Promise<Lot> {
@@ -73,14 +81,24 @@ export class LotRepository implements ILotRepository {
   }
 
   async findById(id: string): Promise<Lot | null> {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      const docByNum = await LotModel.findOne({ lotNumber: id });
-      if (!docByNum) return null;
-      return this.mapDocumentToEntity(docByNum);
+    let doc: ILotDocument | null = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      doc = await LotModel.findById(id);
     }
-    const doc = await LotModel.findById(id);
+    if (!doc) {
+      doc = await LotModel.findOne({ lotNumber: id });
+    }
     if (!doc) return null;
-    return this.mapDocumentToEntity(doc);
+
+    let donorInfo: { donorName?: string; donorType?: string } | undefined = undefined;
+    if (doc.donationId) {
+      const donationDoc = await DonationModel.findById(doc.donationId);
+      if (donationDoc) {
+        donorInfo = { donorName: donationDoc.donorName, donorType: donationDoc.donorType };
+      }
+    }
+
+    return this.mapDocumentToEntity(doc, donorInfo);
   }
 
   async findByDonationId(donationId: string): Promise<Lot[]> {
@@ -112,19 +130,90 @@ export class LotRepository implements ILotRepository {
       query.donationId = filter.donationId;
     }
 
+    const now = new Date();
+    if (filter?.expiryStatus === 'expired') {
+      query.effectiveExpiryDate = { $lte: now };
+    } else if (filter?.expiryStatus === 'expiring_soon') {
+      const sevenDaysFromNow = new Date();
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+      query.effectiveExpiryDate = { $gt: now, $lte: sevenDaysFromNow };
+    }
+
+    const sortOptions: any = {};
+    const sortBy = filter?.sortBy || 'receivedDate';
+    const sortOrder = filter?.sortOrder === 'asc' ? 1 : -1;
+
+    if (sortBy === 'effectiveExpiryDate') {
+      sortOptions.effectiveExpiryDate = sortOrder;
+    } else if (sortBy === 'quantity') {
+      sortOptions.quantity = sortOrder;
+    } else if (sortBy === 'lotNumber') {
+      sortOptions.lotNumber = sortOrder;
+    } else if (sortBy === 'createdAt') {
+      sortOptions.createdAt = sortOrder;
+    } else {
+      sortOptions.receivedDate = sortOrder;
+    }
+
     const page = filter?.page || 1;
     const limit = filter?.limit || 20;
     const skip = (page - 1) * limit;
 
     const [docs, total] = await Promise.all([
-      LotModel.find(query).sort({ receivedDate: -1 }).skip(skip).limit(limit),
+      LotModel.find(query).sort(sortOptions).skip(skip).limit(limit),
       LotModel.countDocuments(query)
     ]);
 
+    // Gather unique donation IDs to enrich donorName and donorType efficiently
+    const donationIds = Array.from(new Set(docs.map((d) => d.donationId.toString()).filter(Boolean)));
+    const donations = await DonationModel.find({ _id: { $in: donationIds } }).select('donorName donorType');
+    const donationMap = new Map<string, { donorName: string; donorType: string }>();
+    donations.forEach((d) => {
+      donationMap.set(d._id.toString(), { donorName: d.donorName, donorType: d.donorType });
+    });
+
+    const lotEntities = docs.map((doc) => {
+      const info = donationMap.get(doc.donationId.toString());
+      return this.mapDocumentToEntity(doc, info);
+    });
+
     return {
-      lots: docs.map((doc) => this.mapDocumentToEntity(doc)),
+      lots: lotEntities,
       total
     };
+  }
+
+  async updateStatus(id: string, status: LotStatus): Promise<Lot | null> {
+    const doc = await LotModel.findByIdAndUpdate(
+      id,
+      { $set: { status, updatedAt: new Date() } },
+      { new: true }
+    );
+    if (!doc) return null;
+    return this.mapDocumentToEntity(doc);
+  }
+
+  async update(lot: Lot): Promise<Lot | null> {
+    if (!lot.id) return null;
+    const doc = await LotModel.findByIdAndUpdate(
+      lot.id,
+      {
+        $set: {
+          itemName: lot.itemName,
+          category: lot.category,
+          quantity: lot.quantity,
+          availableQuantity: lot.availableQuantity,
+          unit: lot.unit,
+          status: lot.status,
+          printedExpiryDate: lot.printedExpiryDate,
+          effectiveExpiryDate: lot.effectiveExpiryDate,
+          updatedAt: new Date()
+        }
+      },
+      { new: true }
+    );
+    if (!doc) return null;
+    return this.mapDocumentToEntity(doc);
   }
 
   async count(): Promise<number> {

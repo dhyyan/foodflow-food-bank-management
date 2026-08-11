@@ -1,3 +1,5 @@
+import { LotStatus } from '../../entities/Lot';
+
 export interface LotResponseDTO {
   id: string;
   lotNumber: string;
@@ -12,6 +14,8 @@ export interface LotResponseDTO {
   effectiveExpiryDate?: string;
   donationId: string;
   donationLineId?: string;
+  donorName?: string;
+  donorType?: string;
   status: string;
   createdBy: {
     id: string;
@@ -26,6 +30,42 @@ export interface LotFilterDTO {
   category?: string;
   status?: string;
   donationId?: string;
+  expiryStatus?: 'all' | 'expiring_soon' | 'expired';
+  sortBy?: 'receivedDate' | 'effectiveExpiryDate' | 'quantity' | 'lotNumber' | 'createdAt';
+  sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;
+}
+
+export interface TransitionLotStatusDTO {
+  targetStatus: LotStatus | string;
+  notes?: string;
+}
+
+export interface LotEventDTO {
+  id: string;
+  lotId: string;
+  eventType: string;
+  previousStatus?: string;
+  newStatus: string;
+  performedBy: {
+    id: string;
+    name: string;
+    role?: string;
+  };
+  notes?: string;
+  timestamp: string;
+}
+
+export interface LotTraceResponseDTO {
+  lot: LotResponseDTO;
+  donation?: {
+    id: string;
+    donationNumber: string;
+    donorName: string;
+    donorType: string;
+    receivedAt: string;
+    status: string;
+  };
+  timeline: LotEventDTO[];
 }
