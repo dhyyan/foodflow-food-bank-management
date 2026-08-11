@@ -12,8 +12,8 @@ import { validateEmail, validatePassword } from '../../utils/validation';
 import logoImg from '../../assets/876fb4c9ef2542f1c3eceee921a9a9fb.jpg';
 
 export const AdminLoginPage: React.FC = () => {
-  const [email, setEmail] = useState('admin@foodflow.org');
-  const [password, setPassword] = useState('Admin@123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string | null; password?: string | null }>({});
   const [portalError, setPortalError] = useState<string | null>(null);
 

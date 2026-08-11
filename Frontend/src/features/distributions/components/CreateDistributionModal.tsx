@@ -40,8 +40,7 @@ export const CreateDistributionModal: React.FC<CreateDistributionModalProps> = (
 
   const [recipientId, setRecipientId] = useState('');
   const [items, setItems] = useState<ItemLineInput[]>([
-    { itemName: 'Rice', requestedQuantity: 100, unit: 'units' },
-    { itemName: 'Milk', requestedQuantity: 20, unit: 'units' }
+    { itemName: '', requestedQuantity: 1, unit: 'units' }
   ]);
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);

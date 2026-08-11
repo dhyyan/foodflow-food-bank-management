@@ -72,8 +72,7 @@ export const CreateDonationModal: React.FC<CreateDonationModalProps> = ({
   const [receivedAt, setReceivedAt] = useState(() => new Date().toISOString().slice(0, 16));
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState<DonationLineItemInput[]>([
-    { ...initialLine, itemName: 'Rice', category: 'Grains', quantity: 50, unit: 'kg' },
-    { ...initialLine, itemName: 'Milk Packets', category: 'Dairy', quantity: 20, unit: 'packets' }
+    { ...initialLine, itemName: '', quantity: 1 }
   ]);
   const [formError, setFormError] = useState<string | null>(null);
 

@@ -75,7 +75,7 @@ export const AIManifestParserModal: React.FC<AIManifestParserModalProps> = ({
   const [activeTab, setActiveTab] = useState<'text' | 'image'>('text');
 
   // Input states
-  const [manifestText, setManifestText] = useState(PRESET_TEXT_MANIFESTS[0].text);
+  const [manifestText, setManifestText] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string>('image/jpeg');
 

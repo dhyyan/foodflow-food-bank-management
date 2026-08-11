@@ -12,7 +12,7 @@ import {
 import { ROUTES } from '../../../constants/routes';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { logout } from '../../../features/auth/authSlice';
-import { ROLE_LABELS } from '../../../constants/roles';
+import { ROLES, ROLE_LABELS } from '../../../constants/roles';
 
 import logoImg from '../../../assets/876fb4c9ef2542f1c3eceee921a9a9fb.jpg';
 
@@ -20,13 +20,15 @@ export const Sidebar: React.FC = () => {
     const dispatch = useAppDispatch();
     const { user } = useAppSelector((state) => state.auth);
 
-    const navItems = [
-        { label: 'Dashboard', path: ROUTES.DASHBOARD, icon: LayoutDashboard },
-        { label: 'User Management', path: ROUTES.USERS, icon: Users },
-        { label: 'Donation Intake', path: ROUTES.DONATIONS, icon: HeartHandshake },
-        { label: 'Stock & Lots', path: ROUTES.LOTS, icon: Boxes },
-        { label: 'Distributions', path: ROUTES.DISTRIBUTIONS, icon: Truck }
+    const allNavItems = [
+        { label: 'Dashboard', path: ROUTES.DASHBOARD, icon: LayoutDashboard, roles: [ROLES.ADMIN] },
+        { label: 'User Management', path: ROUTES.USERS, icon: Users, roles: [ROLES.ADMIN] },
+        { label: 'Donation Intake', path: ROUTES.DONATIONS, icon: HeartHandshake, roles: [ROLES.ADMIN, ROLES.DONATION_CLERK] },
+        { label: 'Stock & Lots', path: ROUTES.LOTS, icon: Boxes, roles: [ROLES.ADMIN, ROLES.STOCK_MANAGER] },
+        { label: 'Distributions', path: ROUTES.DISTRIBUTIONS, icon: Truck, roles: [ROLES.ADMIN, ROLES.HANDOUT_COORDINATOR] }
     ];
+
+    const navItems = allNavItems.filter((item) => user && item.roles.includes(user.role as any));
 
     return (
         <aside
@@ -70,7 +72,7 @@ export const Sidebar: React.FC = () => {
                         Food<span style={{ color: 'var(--primary)' }}>Flow</span>
                     </h2>
                     <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Admin Portal
+                        {user?.role === ROLES.ADMIN ? 'Admin Portal' : 'Staff Workstation'}
                     </span>
                 </div>
             </div>

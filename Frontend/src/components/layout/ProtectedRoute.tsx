@@ -4,6 +4,9 @@ import { useAppSelector } from '../../app/hooks';
 import { ROUTES } from '../../constants/routes';
 import { getRoleDefaultRoute } from '../../constants/roles';
 
+import { Sidebar } from './Sidebar/Sidebar';
+import { Header } from './Header/Header';
+
 interface ProtectedRouteProps {
   allowedRoles?: string[];
 }
@@ -21,7 +24,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
     return <Navigate to={defaultRoute} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <div className="app-container">
+      <Sidebar />
+      <div className="main-content">
+        <Header />
+        <Outlet />
+      </div>
+    </div>
+  );
 };
 
 export default ProtectedRoute;
