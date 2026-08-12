@@ -3,6 +3,9 @@
 > **A modern, enterprise-grade food bank logistics platform powered by Clean Architecture, AI-driven manifest parsing, First-Expired First-Out (FEFO) automated allocation, multi-warehouse tracking, and real-time audit logging.**
 
 ---
+LIVE:
+https://foodflow-food-bank-management.vercel.app/login
+https://foodflow-food-bank-management.vercel.app/admin/login
 
 ## 🔑 Demo Credentials (For Immediate Testing)
 
@@ -73,10 +76,10 @@ Food banks face immense logistical challenges: managing incoming perishable dona
 If you are visiting the platform for the first time, follow this step-by-step walkthrough to test the full lifecycle of food donations, inventory processing, FEFO allocation, and audit tracking.
 
 ```
-[Donation Clerk]               [Stock Manager]             [Handout Coordinator]             [System Admin]
-
-  Intake & Parse   ────────►   Inspect, Shelve   ────────►   Preview FEFO & Alloc   ────────►  Review Audit Logs
- Manifest with AI             & Transfer Warehouse             Dispatch to Recipient            & Analytics Dashboard
+    [System Admin]        [Donation Clerk]               [Stock Manager]             [Handout Coordinator]             
+  
+    create user's  ──────► Intake & Parse   ────────►   Inspect, Shelve   ────────►   Preview FEFO & Alloc   
+    & assign Roles         Manifest with AI             & Transfer Warehouse           Dispatch to Recipient            
 ```
 
 ### Step 1: Log in as Donation Clerk (Intake Food Donations)
@@ -84,40 +87,41 @@ If you are visiting the platform for the first time, follow this step-by-step wa
 2. Enter Credentials: **Email**: `clerk@foodflow.org` | **Password**: `Clerk@123456`.
 3. Click on **Donations** in the navigation bar.
 4. Click the **+ New Donation** button.
-5. Select **AI Manifest Parser** to test AI text or photo extraction:
-   - **Text Extraction**: Paste a raw manifest text (e.g., `100 kg Rice exp: 2026-12-31, 50 cartons Milk exp: 2026-09-15`).
-   - **Photo Extraction**: Upload a photo of a donation receipt/manifest image.
-6. Click **Parse Manifest**. The system extracts item names, quantities, units, and expiration dates.
-7. Click **Confirm & Create Donation**. The system generates a new donation record and automatically creates inventory lots in the `Received` state.
+5. Fill in **Donor & Intake Details** (Donor Name/Organization, Donor Type, Received Date & Time, and optional Intake Notes) or select **AI Manifest Parser**:
+   - **Text Extraction**: Paste raw manifest text (e.g., `100 kg Rice exp: 2026-12-31, 50 cartons Milk exp: 2026-09-15`).
+   - **Photo Extraction**: Upload a photo of a donation receipt or manifest image.
+6. Add or review **Donated Line Items** (Item Name, Category, Quantity, Unit, and Printed Package Expiry Date with automatic safety margin calculation).
+7. Click **Submit Intake & Generate Lots**. The system creates the donation record and automatically generates inventory lots in the `Received` state.
+8. Click on any donation row to open the **Donation Details** modal and inspect full metadata and created lot details.
+
 
 ### Step 2: Log in as Stock Manager (Manage Inventory Lifecycle & Warehouses)
 1. Log out and go to `http://localhost:5173/login`.
 2. Enter Credentials: **Email**: `stock@foodflow.org` | **Password**: `Stock@123456`.
 3. Click on **Inventory Lots** in the navigation bar.
 4. Locate the newly created lot (Status: `Received`).
-5. Click **Change Status** to update the lot from `Received` → `Checked` → `Shelved`.
-6. Click **Print Label / QR Code** to view and print the generated QR Code and Barcode for physical warehouse placement.
+5. Click **Change Status** to update the lot through its lifecycle transitions (`Received` → `Checked` → `Shelved`, or flag as `Quarantine` / `Discarded` if compromised or expired).
+6. Click **Print Label / QR Code** to view and print the generated Code-128 Barcode label for physical warehouse placement.
 7. Click **Transfer Warehouse** to move the lot to another warehouse location (e.g., Main Hub → North Distribution Center).
 8. Click **View History / Audit Trail** on any lot to see the complete immutable timeline of state changes and warehouse movements.
+
 
 ### Step 3: Log in as Handout Coordinator (Distribute Stock using FEFO Engine)
 1. Log out and go to `http://localhost:5173/login`.
 2. Enter Credentials: **Email**: `handout@foodflow.org` | **Password**: `Handout@123456`.
 3. Click on **Distributions** in the navigation bar.
 4. Click **+ New Distribution**.
-5. Select a Recipient (e.g., *Hope Community Shelter* or *John Family*).
+5. Select or Register a Recipient (e.g., *Hope Community Shelter* or *John Family*).
 6. Select the requested item (e.g., *Rice*) and enter the desired quantity.
-7. Click **Preview FEFO Allocation**. The backend FEFO engine automatically selects the oldest non-expired lots first and displays a transparent breakdown of allocated lots.
-8. Click **Confirm & Complete Distribution**. Stock is reserved, released, and deducted from inventory automatically.
+7. The system automatically checks and verifies the recipient's **Monthly Quota Limit** to ensure eligibility.
+8. Click **Preview FEFO Allocation**. The backend FEFO engine automatically selects the oldest non-expired lots first and displays a transparent breakdown of allocated lots.
+9. Click **Confirm & Complete Distribution**. Stock is reserved, released, and deducted from inventory automatically.
+
 
 ### Step 4: Log in as System Admin (Monitor System Health & Audit Logs)
 1. Go to `http://localhost:5173/admin/login`.
 2. Enter Credentials: **Email**: `admin@foodflow.org` | **Password**: `Admin@123456`.
-3. View the **Admin Dashboard** to inspect:
-   - Total inventory volume and category breakdowns.
-   - Expiring items warning widget (items expiring within 48 hours).
-   - Recipient quota consumption charts.
-4. Navigate to **User Management** to view, deactivate, or create operational staff accounts.
+3. Navigate to **User Management** to view, deactivate, or create operational staff accounts.
 
 ---
 
@@ -157,7 +161,7 @@ To ensure that FoodFlow remains clean, scalable, and maintainable, explicit deve
 - **How it Works**: Any update to an inventory lot triggers `CreateAuditLogUseCase`. The system compares the previous entity state against the updated state to produce a detailed list of modified fields (`fieldName`, `oldValue`, `newValue`). Each log stores the action type, actor ID, user name, IP address, and timestamp.
 
 ### 5. Multi-Warehouse Stock Transfers
-- **How it Works**: Inventory lots belong to specific warehouse facilities (`WarehouseModel`). Stock managers can initiate inter-warehouse transfers. The system validates target warehouse capacity, updates lot location metadata, and logs a transfer event in the audit trail.
+- **How it Works**: Inventory lots belong to specific warehouse facilities (`WarehouseModel`). Stock managers can initiate inter-warehouse transfers. The system validates target warehouse capacity, updates lot location metadata, and logs a transfer event in the audit trail. But not completed . 
 
 ### 6. Email Notification Hub
 - **How it Works**: Powered by `EmailService.ts` via Nodemailer. Features automated alerts:
@@ -166,7 +170,8 @@ To ensure that FoodFlow remains clean, scalable, and maintainable, explicit deve
   - *Fallback*: If SMTP credentials are missing, the system runs in simulation mode, logging formatted email contents to the server console.
 
 ### 7. Real-Time Barcode & QR Code Generation
-- **How it Works**: Utilizes `qrcode` and `bwip-js` packages to render printable SVG/DataURL QR codes and Code-128 barcodes containing encoded Lot Numbers, Item details, Expiration dates, and Warehouse locations for physical box labeling.
+- **How it Works**: **How it Works**: Utilizes the `react-barcode` package to render printable Code-128 barcodes containing encoded Lot Numbers, Item details, and Expiration dates for physical box labeling.
+
 
 ---
 
