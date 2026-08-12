@@ -1,5 +1,6 @@
 import { IUserRepository } from '../../../domain/interface/repositoryInterface/IUserRepository';
 import { User, UserRole } from '../../../domain/entities/User';
+import { UserFilterDTO } from '../../../domain/interface/DTOs/UserDTO';
 import { UserModel, IUserDocument } from '../../../frameWork/database/models/UserModel';
 import mongoose from 'mongoose';
 
@@ -43,10 +44,36 @@ export class UserRepository implements IUserRepository {
     return this.mapDocumentToEntity(createdDoc);
   }
 
-  async findAll(): Promise<User[]> {
-    const docs = await UserModel.find().sort({ createdAt: -1 });
-    return docs.map((doc) => this.mapDocumentToEntity(doc));
+  async findAll(filter?: UserFilterDTO): Promise<{ users: User[]; total: number }> {
+    const query: any = {};
+
+    if (filter?.search) {
+      const searchRegex = new RegExp(filter.search, 'i');
+      query.$or = [
+        { name: searchRegex },
+        { email: searchRegex }
+      ];
+    }
+
+    if (filter?.role && filter.role !== 'all') {
+      query.role = filter.role;
+    }
+
+    const page = filter?.page || 1;
+    const limit = filter?.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [docs, total] = await Promise.all([
+      UserModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      UserModel.countDocuments(query)
+    ]);
+
+    return {
+      users: docs.map((doc) => this.mapDocumentToEntity(doc)),
+      total
+    };
   }
+
 
   async updateStatus(id: string, isActive: boolean): Promise<User | null> {
     if (!mongoose.Types.ObjectId.isValid(id)) return null;

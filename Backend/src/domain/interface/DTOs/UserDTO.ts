@@ -28,3 +28,19 @@ export interface LoginResponseDTO {
   user: UserResponseDTO;
   token: string;
 }
+
+export interface UserFilterDTO {
+  search?: string;
+  role?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface UserPaginatedResponseDTO {
+  users: UserResponseDTO[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+

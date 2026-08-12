@@ -51,19 +51,30 @@ export class AuthController {
     }
   };
 
-  getUsers = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  getUsers = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-      const users = await this.getUsersUseCase.execute();
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+      const search = req.query.search ? String(req.query.search) : undefined;
+      const role = req.query.role ? String(req.query.role) : undefined;
+
+      const result = await this.getUsersUseCase.execute({
+        page,
+        limit,
+        search,
+        role
+      });
 
       return res.status(200).json({
         success: true,
         message: 'Users retrieved successfully',
-        data: users
+        data: result
       });
     } catch (error) {
       return next(error);
     }
   };
+
 
   toggleStatus = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {

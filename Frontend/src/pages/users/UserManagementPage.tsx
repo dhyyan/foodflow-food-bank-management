@@ -7,6 +7,7 @@ import { Button } from '../../components/common/Button/Button';
 import { Input } from '../../components/common/Input/Input';
 import { Select } from '../../components/common/Select/Select';
 import { Modal } from '../../components/common/Modal/Modal';
+import { Pagination } from '../../components/common/Pagination/Pagination';
 import { StatusBadge } from '../../components/shared/StatusBadge/StatusBadge';
 import { RoleBadge } from '../../components/shared/RoleBadge/RoleBadge';
 import { ErrorState } from '../../components/common/ErrorState/ErrorState';
@@ -19,10 +20,13 @@ import { validateEmail, validatePassword, validateRequired } from '../../utils/v
 
 export const UserManagementPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { users, loading, actionLoading, error, actionSuccess } = useAppSelector((state) => state.users);
+  const { users, total, page, limit, totalPages, loading, actionLoading, error, actionSuccess } = useAppSelector(
+    (state) => state.users
+  );
   const currentUser = useAppSelector((state) => state.auth.user);
 
-  // Filters state
+  // Pagination & Filters state
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
 
@@ -39,8 +43,15 @@ export const UserManagementPage: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
-    dispatch(fetchUsers());
-  }, [dispatch]);
+    dispatch(
+      fetchUsers({
+        page: currentPage,
+        limit: 10,
+        search: searchTerm || undefined,
+        role: selectedRole !== 'all' ? selectedRole : undefined
+      })
+    );
+  }, [dispatch, currentPage, searchTerm, selectedRole]);
 
   useEffect(() => {
     if (actionSuccess) {
@@ -54,9 +65,17 @@ export const UserManagementPage: React.FC = () => {
       });
       setFormErrors({});
       dispatch(resetUserActionState());
-      dispatch(fetchUsers());
+      dispatch(
+        fetchUsers({
+          page: currentPage,
+          limit: 10,
+          search: searchTerm || undefined,
+          role: selectedRole !== 'all' ? selectedRole : undefined
+        })
+      );
     }
-  }, [actionSuccess, dispatch]);
+  }, [actionSuccess, dispatch, currentPage, searchTerm, selectedRole]);
+
 
   const handleOpenModal = () => {
     dispatch(resetUserActionState());
@@ -133,14 +152,7 @@ export const UserManagementPage: React.FC = () => {
     }
   };
 
-  // Filtered User list
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch =
-      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === 'all' || u.role === selectedRole;
-    return matchesSearch && matchesRole;
-  });
+
 
   const columns: Column<User>[] = [
     {
@@ -248,7 +260,10 @@ export const UserManagementPage: React.FC = () => {
           <Input
             placeholder="Search staff by name or email..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             leftIcon={<Search size={16} />}
           />
         </div>
@@ -256,7 +271,10 @@ export const UserManagementPage: React.FC = () => {
         <div style={{ width: '220px' }}>
           <Select
             value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value)}
+            onChange={(e) => {
+              setSelectedRole(e.target.value);
+              setCurrentPage(1);
+            }}
             options={[
               { value: 'all', label: 'All Roles' },
               { value: ROLES.ADMIN, label: 'System Admin' },
@@ -269,7 +287,17 @@ export const UserManagementPage: React.FC = () => {
       </div>
 
       {/* Table Display */}
-      <Table columns={columns} data={filteredUsers} loading={loading} emptyMessage="No staff members match the selected filters" />
+      <Table columns={columns} data={users} loading={loading} emptyMessage="No staff members match the selected filters" />
+
+      {/* Pagination Controls */}
+      <Pagination
+        currentPage={page || currentPage}
+        totalPages={totalPages}
+        totalItems={total}
+        pageSize={limit || 10}
+        onPageChange={(newPage) => setCurrentPage(newPage)}
+      />
+
 
       {/* Status Toggle Confirmation Modal */}
       {statusModalTarget && (
