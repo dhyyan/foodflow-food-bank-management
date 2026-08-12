@@ -1,4 +1,5 @@
 import React from 'react';
+import Barcode from 'react-barcode';
 import { Modal } from '../../../components/common/Modal/Modal';
 import { Button } from '../../../components/common/Button/Button';
 import { LotQRCodeTag } from '../../../components/shared/LotQRCodeTag/LotQRCodeTag';
@@ -98,11 +99,17 @@ export const PrintLotLabelModal: React.FC<PrintLotLabelModalProps> = ({
           </div>
 
           {/* Barcode Strip */}
-          <div style={{ textAlign: 'center', paddingTop: '0.5rem', borderTop: '1px dashed #d1d5db' }}>
-            <div style={{ fontFamily: 'monospace', letterSpacing: '0.3em', fontSize: '0.9rem', fontWeight: 800, color: '#374151' }}>
-              ||| | |||| || | ||| |||| | ||
-            </div>
-            <span style={{ fontSize: '0.65rem', color: '#9ca3af' }}>SCANNABLE FOODFLOW QR / BARCODE TAG</span>
+          <div style={{ textAlign: 'center', paddingTop: '0.5rem', borderTop: '1px dashed #d1d5db', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Barcode
+              value={lot.lotNumber}
+              format="CODE128"
+              width={1.3}
+              height={40}
+              fontSize={12}
+              margin={0}
+              background="transparent"
+            />
+            <span style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '0.25rem' }}>SCANNABLE FOODFLOW QR / BARCODE TAG</span>
           </div>
         </div>
 
