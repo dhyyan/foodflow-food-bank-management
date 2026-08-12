@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
 import { ROLES } from '../constants/roles';
 import { AdminLoginPage } from '../pages/auth/AdminLoginPage';
@@ -18,11 +18,18 @@ export const router = createBrowserRouter([
   {
     errorElement: <ErrorElementPage />,
     children: [
+      // Root redirect to Login
+      {
+        path: '/',
+        element: <Navigate to={ROUTES.USER_LOGIN} replace />
+      },
+
       // Public Separate Auth Routes
       {
         path: ROUTES.ADMIN_LOGIN,
         element: <AdminLoginPage />
       },
+      
       {
         path: ROUTES.USER_LOGIN,
         element: <UserLoginPage />
