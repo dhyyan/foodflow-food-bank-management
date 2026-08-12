@@ -2,7 +2,6 @@ import React from 'react';
 import Barcode from 'react-barcode';
 import { Modal } from '../../../components/common/Modal/Modal';
 import { Button } from '../../../components/common/Button/Button';
-import { LotQRCodeTag } from '../../../components/shared/LotQRCodeTag/LotQRCodeTag';
 import { Printer, Calendar, Layers } from 'lucide-react';
 import { formatDate } from '../../../utils/date';
 
@@ -27,14 +26,12 @@ export const PrintLotLabelModal: React.FC<PrintLotLabelModalProps> = ({
 }) => {
   if (!lot) return null;
 
-  const qrPayload = `foodflow://lots/${lot.lotNumber}`;
-
   const handlePrint = () => {
     window.print();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Inventory Lot QR Label: #${lot.lotNumber}`} maxWidth="500px">
+    <Modal isOpen={isOpen} onClose={onClose} title={`Inventory Lot Barcode Label: #${lot.lotNumber}`} maxWidth="500px">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
         {/* Printable Label Tag Sheet */}
         <div
@@ -74,16 +71,14 @@ export const PrintLotLabelModal: React.FC<PrintLotLabelModalProps> = ({
             </span>
           </div>
 
-          {/* Tag Body with QR Code & Metadata */}
-          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
-            <LotQRCodeTag value={qrPayload} size={110} />
+          {/* Tag Body Metadata */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
+            <div>
+              <span style={{ fontSize: '0.72rem', color: '#6b7280', display: 'block' }}>Item Description:</span>
+              <strong style={{ fontSize: '1rem', color: '#111827' }}>{lot.itemName}</strong>
+            </div>
 
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem' }}>
-              <div>
-                <span style={{ fontSize: '0.72rem', color: '#6b7280', display: 'block' }}>Item Description:</span>
-                <strong style={{ fontSize: '1rem', color: '#111827' }}>{lot.itemName}</strong>
-              </div>
-
+            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginTop: '0.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Layers size={14} style={{ color: 'var(--primary)' }} />
                 <span style={{ fontWeight: 700, color: '#111827' }}>{lot.quantity} {lot.unit || 'units'}</span>
@@ -99,17 +94,17 @@ export const PrintLotLabelModal: React.FC<PrintLotLabelModalProps> = ({
           </div>
 
           {/* Barcode Strip */}
-          <div style={{ textAlign: 'center', paddingTop: '0.5rem', borderTop: '1px dashed #d1d5db', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ textAlign: 'center', paddingTop: '0.75rem', borderTop: '1px dashed #d1d5db', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Barcode
               value={lot.lotNumber}
               format="CODE128"
-              width={1.3}
-              height={40}
-              fontSize={12}
+              width={1.5}
+              height={45}
+              fontSize={13}
               margin={0}
               background="transparent"
             />
-            <span style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '0.25rem' }}>SCANNABLE FOODFLOW QR / BARCODE TAG</span>
+            <span style={{ fontSize: '0.65rem', color: '#9ca3af', marginTop: '0.25rem' }}>SCANNABLE FOODFLOW BARCODE TAG</span>
           </div>
         </div>
 
@@ -119,7 +114,7 @@ export const PrintLotLabelModal: React.FC<PrintLotLabelModalProps> = ({
             Close
           </Button>
           <Button variant="primary" leftIcon={<Printer size={16} />} onClick={handlePrint}>
-            Print QR Tag
+            Print Barcode Label
           </Button>
         </div>
       </div>
