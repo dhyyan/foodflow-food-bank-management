@@ -11,17 +11,24 @@ export class CreateDistributionUseCase {
   ) {}
 
   async execute(dto: CreateDistributionDTO, creator: { id: string; name: string }): Promise<DistributionResponseDTO> {
-    if (!dto.recipientId) {
-      throw new BadRequestError('Recipient ID is required');
+    if (!dto.recipientId && !dto.recipientEmail) {
+      throw new BadRequestError('Either recipient ID or recipient email is required');
     }
 
     if (!dto.items || dto.items.length === 0) {
       throw new BadRequestError('At least one item line is required for distribution');
     }
 
-    const recipient = await this.recipientRepository.findById(dto.recipientId);
+    let recipient = null;
+    if (dto.recipientId) {
+      recipient = await this.recipientRepository.findById(dto.recipientId);
+    }
+    if (!recipient && dto.recipientEmail) {
+      recipient = await this.recipientRepository.findByEmail(dto.recipientEmail.trim().toLowerCase());
+    }
+
     if (!recipient) {
-      throw new NotFoundError('Recipient with provided ID was not found');
+      throw new NotFoundError('Recipient family or agency not found in database');
     }
 
     // Calculate total requested units in this distribution
@@ -44,8 +51,8 @@ export class CreateDistributionUseCase {
     // Check family 50-unit monthly quota
     if (recipient.type === 'family') {
       const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth() + 1; // 1-indexed
+      const currentYear = now.getUTCFullYear();
+      const currentMonth = now.getUTCMonth() + 1; // 1-indexed
 
       const alreadyReceivedThisMonth = await this.distributionRepository.sumMonthlyUnitsByRecipientId(
         recipient.id!,
@@ -57,15 +64,19 @@ export class CreateDistributionUseCase {
       if (alreadyReceivedThisMonth + newRequestTotalUnits > quota) {
         const remainingQuota = Math.max(0, quota - alreadyReceivedThisMonth);
         throw new BadRequestError(
-          `Monthly family quota exceeded. ${remainingQuota} units remaining for this month.`,
+          `Monthly family quota exceeded. Family has used ${alreadyReceivedThisMonth} of ${quota} units this month (${remainingQuota} units remaining). Requesting ${newRequestTotalUnits} units exceeds the limit.`,
           'MONTHLY_QUOTA_EXCEEDED'
         );
       }
     }
 
-    // Generate distribution number (DST-XXX)
+    // Generate unique distribution number (DST-XXX)
     const count = await this.distributionRepository.count();
-    const distributionNumber = `DST-${(count + 101).toString().padStart(3, '0')}`;
+    let distributionNumber = `DST-${(count + 101).toString().padStart(3, '0')}`;
+    const existing = await this.distributionRepository.findById(distributionNumber);
+    if (existing) {
+      distributionNumber = `DST-${(count + 101).toString().padStart(3, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
 
     const distribution = new Distribution({
       distributionNumber,
@@ -75,8 +86,8 @@ export class CreateDistributionUseCase {
       items: itemsList,
       status: 'pending',
       createdBy: {
-        id: creator.id,
-        name: creator.name
+        id: creator?.id || 'unknown',
+        name: creator?.name || 'Handout Coordinator'
       },
       notes: dto.notes
     });

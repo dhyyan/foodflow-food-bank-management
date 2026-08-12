@@ -20,3 +20,12 @@ export interface RecipientResponseDTO {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface RecipientQuotaResponseDTO {
+  exists: boolean;
+  recipient?: RecipientResponseDTO;
+  monthlyQuota: number;
+  usedThisMonth: number;
+  remainingQuota: number;
+  isQuotaCompleted: boolean;
+}

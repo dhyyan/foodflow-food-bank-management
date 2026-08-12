@@ -38,7 +38,8 @@ const RecipientSchema = new Schema<IRecipientDocument>(
     contactEmail: {
       type: String,
       trim: true,
-      lowercase: true
+      lowercase: true,
+      index: true
     },
     address: {
       type: String,

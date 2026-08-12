@@ -9,7 +9,8 @@ export interface DistributionItemDTO {
 }
 
 export interface CreateDistributionDTO {
-  recipientId: string;
+  recipientId?: string;
+  recipientEmail?: string;
   items: DistributionItemDTO[];
   notes?: string;
 }

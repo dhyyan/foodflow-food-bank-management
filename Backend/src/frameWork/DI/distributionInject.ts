@@ -5,6 +5,7 @@ import { DistributionRepository } from '../../adapters/repository/distribution/D
 
 import { CreateRecipientUseCase } from '../../useCase/recipient/CreateRecipientUseCase';
 import { GetRecipientsUseCase } from '../../useCase/recipient/GetRecipientsUseCase';
+import { CheckRecipientQuotaUseCase } from '../../useCase/recipient/CheckRecipientQuotaUseCase';
 
 import { CreateDistributionUseCase } from '../../useCase/distribution/CreateDistributionUseCase';
 import { PreviewFEFOUseCase } from '../../useCase/distribution/PreviewFEFOUseCase';
@@ -22,8 +23,13 @@ export const distributionRepository = new DistributionRepository();
 
 const createRecipientUseCase = new CreateRecipientUseCase(recipientRepository);
 const getRecipientsUseCase = new GetRecipientsUseCase(recipientRepository);
+const checkRecipientQuotaUseCase = new CheckRecipientQuotaUseCase(recipientRepository, distributionRepository);
 
-export const recipientController = new RecipientController(createRecipientUseCase, getRecipientsUseCase);
+export const recipientController = new RecipientController(
+  createRecipientUseCase,
+  getRecipientsUseCase,
+  checkRecipientQuotaUseCase
+);
 
 const createDistributionUseCase = new CreateDistributionUseCase(distributionRepository, recipientRepository);
 const previewFEFOUseCase = new PreviewFEFOUseCase(distributionRepository, lotRepository);

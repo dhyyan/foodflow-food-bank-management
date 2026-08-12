@@ -2,6 +2,8 @@ import apiClient from '../../services/api/apiClient';
 import type {
   Recipient,
   RecipientType,
+  RecipientQuotaInfo,
+  CreateRecipientInput,
   DistributionRecord,
   CreateDistributionPayload,
   FEFOPreviewResponse,
@@ -11,6 +13,16 @@ import type {
 export const distributionApi = {
   getRecipients: async (type?: RecipientType): Promise<Recipient[]> => {
     const response = await apiClient.get('/recipients', { params: { type } });
+    return response.data.data;
+  },
+
+  checkRecipientQuota: async (email: string): Promise<RecipientQuotaInfo> => {
+    const response = await apiClient.get('/recipients/check-quota', { params: { email } });
+    return response.data.data;
+  },
+
+  createRecipient: async (data: CreateRecipientInput): Promise<Recipient> => {
+    const response = await apiClient.post('/recipients', data);
     return response.data.data;
   },
 

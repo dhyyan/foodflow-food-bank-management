@@ -7,6 +7,13 @@ import { UserRole } from '../../domain/entities/User';
 const router = Router();
 
 router.get(
+  '/check-quota',
+  jwtMiddleware,
+  requireRole(UserRole.ADMIN, UserRole.HANDOUT_COORDINATOR, UserRole.DONATION_CLERK, UserRole.STOCK_MANAGER),
+  recipientController.checkQuota
+);
+
+router.get(
   '/',
   jwtMiddleware,
   requireRole(UserRole.ADMIN, UserRole.HANDOUT_COORDINATOR, UserRole.DONATION_CLERK, UserRole.STOCK_MANAGER),

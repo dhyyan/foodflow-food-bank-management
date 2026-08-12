@@ -37,6 +37,13 @@ export class RecipientRepository implements IRecipientRepository {
     return this.mapDocumentToEntity(doc);
   }
 
+  async findByEmail(email: string): Promise<Recipient | null> {
+    if (!email || !email.trim()) return null;
+    const doc = await RecipientModel.findOne({ contactEmail: email.trim().toLowerCase() });
+    if (!doc) return null;
+    return this.mapDocumentToEntity(doc);
+  }
+
   async findAll(filter?: { type?: RecipientType; search?: string }): Promise<Recipient[]> {
     const query: any = {};
     if (filter?.type) {
