@@ -1,367 +1,407 @@
-# 🥗 FoodFlow - Food Bank Management System
+# 🌾 FoodFlow — Intelligent Food Bank & Inventory Management System
 
-A high-integrity, production-ready Food Bank Donation & Distribution Management System engineered with **Clean Architecture (Domain-Driven Design)**, **First-Expired-First-Out (FEFO) Inventory Allocation**, **Role-Based Access Control (RBAC)**, and **Multimodal AI Vision Manifest Processing**.
+> **A modern, enterprise-grade food bank logistics platform powered by Clean Architecture, AI-driven manifest parsing, First-Expired First-Out (FEFO) automated allocation, multi-warehouse tracking, and real-time audit logging.**
+
+---
+
+## 🔑 Demo Credentials (For Immediate Testing)
+
+Evaluators and first-time users can log in using any of the pre-configured role-based accounts below. Each account unlocks a specific operational role in the food bank supply chain:
+
+| Role | Email Address | Default Password | Granted Permissions & Access |
+| :--- | :--- | :--- | :--- |
+| **System Admin** | `admin@foodflow.org` | `Admin@123456` | Full platform control, User management, System audit logs, Analytics |
+
+| **Donation Clerk** | `clerk@foodflow.org` | `Clerk@123456` | Intake food donations, AI Manifest parsing (Text & Image OCR), Lot creation |
+
+| **Stock Manager** | `stock@foodflow.org` | `Stock@123456` | Lot lifecycle state transitions, Multi-warehouse transfers, QR/Barcode generation |
+
+| **Handout Coordinator** | `handout@foodflow.org` | `Handout@123456` | Recipient management, FEFO distribution preview & dispatch, Quota tracking |
+
+> 💡 **Note:** Login pages are separated into **User Portal** (`/login`) for operational staff and **Admin Portal** (`/admin/login`) for system administrators.
 
 ---
 
 ## 📋 Table of Contents
-- [Executive Summary](#-executive-summary)
-- [Tech Stack Overview](#-tech-stack-overview)
-- [Architecture & Design Patterns](#-architecture--design-patterns)
-- [Role-Based Workflows](#-role-based-workflows)
-- [Key Engineering Implementations](#-key-engineering-implementations)
-  - [1. Multimodal AI Manifest Parser](#1-multimodal-ai-manifest-parser)
-  - [2. FEFO Allocation Engine](#2-fefo-allocation-engine)
-  - [3. Atomic Inventory Reservation & Lot Audit Trail](#3-atomic-inventory-reservation--lot-audit-trail)
-  - [4. Recipient Quota & Safety System](#4-recipient-quota--safety-system)
-  - [5. Role-Based Access Control (RBAC)](#5-role-based-access-control-rbac)
-- [Directory Structure](#-directory-structure)
-- [Database Data Models](#-database-data-models)
-- [API Endpoints Reference](#-api-endpoints-reference)
-- [Getting Started & Installation](#-getting-started--installation)
-  - [Prerequisites](#prerequisites)
-  - [Backend Setup](#backend-setup)
-  - [Frontend Setup](#frontend-setup)
-- [Running the Application](#-running-the-application)
+
+- [Project Description](#-project-description)
+
+- [Step-by-Step First-Time User Guide](#-step-by-step-first-time-user-guide)
+
+- [Architectural Guidelines (`Backend/AGENT.md` & `Frontend/AGENT.md`)](#-architectural-guidelines-backendagentmd--frontendagentmd)
+
+- [Key Features & Technical Implementation](#-key-features--technical-implementation)
+
+- [Tech Stack & Justification](#-tech-stack--justification)
+
+- [Why TypeScript?](#-why-typescript)
+
+- [Backend Folder Structure & Architecture](#-backend-folder-structure--architecture)
+
+- [SOLID Principles in Action](#-solid-principles-in-action)
+
+- [REST API Standards](#-rest-api-standards)
+
+- [Local Setup & Installation Guide](#-local-setup--installation-guide)
+
+- [Environment Variables (`.env.example`)](#-environment-variables-envexample)
 
 ---
 
-## 📌 Executive Summary
+## 📌 Project Description
 
-**FoodFlow** solves critical supply chain and inventory management challenges faced by food banks and non-profit distribution centers:
-* Minimizing food waste through automated expiration tracking and **FEFO (First-Expired-First-Out)** dispatching.
-* Accelerating donor intake operations with **Google Gemini 1.5 Flash AI Vision** to automatically parse receipts, physical donation manifests, and unstructured food item lists.
-* Preventing over-allocation and ensuring equitable distribution through **monthly recipient family/agency quota tracking**.
-* Guaranteeing accountability and traceability with an **immutable Lot Event audit trail**.
+Food banks face immense logistical challenges: managing incoming perishable donations, tracking variable expiry dates, avoiding food wastage, enforcing fair distribution quotas, and maintaining audit compliance. Manual paper-based record-keeping often leads to inventory spoilage and delayed distributions.
 
----
+**FoodFlow** solves these critical challenges by providing an automated, end-to-end food bank logistics system built on robust engineering standards:
 
-## 🛠 Tech Stack Overview
+1. **AI-Powered Intake Engine**: Converts handwritten or digital donation manifests into structured inventory line items using Google Gemini 1.5 Flash Vision and local Tesseract OCR fallback.
 
-### **Backend Core Architecture**
-| Layer / Tech | Tool / Library | Version | Description |
-| :--- | :--- | :--- | :--- |
-| **Language** | TypeScript | `5.5.4` | Strictly typed runtime for full type safety across domain entities & API DTOs |
-| **Runtime & Server** | Node.js / Express.js | `4.19.2` | Fast, lightweight RESTful web application framework |
-| **Database & ODM** | MongoDB / Mongoose | `8.5.2` | Document database for flexible document schemas and strong indexing |
-| **Authentication** | JSON Web Tokens (`jsonwebtoken`) | `9.0.2` | Secure stateless auth with bearer token validation |
-| **Security** | `bcryptjs` | `2.4.3` | Salted password hashing for credentials protection |
-| **AI Integration** | Google Generative AI (`@google/generative-ai`) | `0.24.1` | Gemini 1.5 Flash model for zero-shot text & image manifest parsing |
-| **OCR Fallback** | Tesseract.js | `7.0.0` | Local Optical Character Recognition for raw image text extraction |
-| **Development Tooling** | `ts-node-dev` | `2.0.0` | Auto-restarting development server for TypeScript |
+2. **First-Expired, First-Out (FEFO) Engine**: Automatically allocates stock for distribution based on expiration dates, ensuring older perishable items are dispatched first to minimize waste.
 
-### **Frontend User Interface**
-| Layer / Tech | Tool / Library | Version | Description |
-| :--- | :--- | :--- | :--- |
-| **Framework** | React | `19.2.8` | Modern component-driven UI development with React 19 primitives |
-| **Type System** | TypeScript | `6.0.2` | Shared interface definitions matching backend DTO schemas |
-| **Build Tooling** | Vite | `8.2.0` | High-performance ES modules bundler and fast dev server |
-| **State Management** | Redux Toolkit / React-Redux | `2.12.0` | Global state management for user sessions, auth state, and data slices |
-| **Routing** | React Router DOM | `7.18.2` | Client-side route management with protected route guards |
-| **HTTP Client** | Axios | `1.19.0` | Centralized HTTP client with automatic auth headers & response interceptors |
-| **Icons & UI** | Lucide React | `1.31.0` | Modern SVG iconography system |
-| **Styling** | Custom Vanilla CSS System | CSS3 | Responsive dark/light themed design system with glassmorphic cards & micro-animations |
+3. **Strict Lot Lifecycle Management**: Tracks inventory through explicit state transitions (`Received` → `Checked` → `Shelved` → `Reserved` → `Released` → `Quarantined` / `Discarded`).
+
+4. **Field-Level Audit Trail**: Records every inventory modification, status transition, and stock transfer with field-level before/after diffs, user ID, IP address, and timestamp.
+
+5. **Multi-Warehouse Coordination**: Supports multi-location warehouse operations and inter-facility stock transfers.
+
+6. **Automated Notification Hub**: Sends urgent 48-hour expiration alerts and daily intake dispatch reports via email.
 
 ---
 
-## 🏗 Architecture & Design Patterns
+## 🚀 Step-by-Step First-Time User Guide
 
-FoodFlow Backend is structured following **Clean Architecture (Domain-Driven Design)** principles to enforce decoupling between enterprise business logic and external infrastructure/frameworks.
+If you are visiting the platform for the first time, follow this step-by-step walkthrough to test the full lifecycle of food donations, inventory processing, FEFO allocation, and audit tracking.
 
 ```
-                          ┌──────────────────────────────────────┐
-                          │         Frameworks & Drivers         │
-                          │   Express, MongoDB, Gemini AI, Vite  │
-                          └──────────────────┬───────────────────┘
-                                             │
-                                             ▼
-                          ┌──────────────────────────────────────┐
-                          │    Interface Adapters / Controllers  │
-                          │    HTTP Handlers, DTOs, Presenters   │
-                          └──────────────────┬───────────────────┘
-                                             │
-                                             ▼
-                          ┌──────────────────────────────────────┐
-                          │            Use Cases Layer           │
-                          │ FEFO Allocation, Quotas, Intakes     │
-                          └──────────────────┬───────────────────┘
-                                             │
-                                             ▼
-                          ┌──────────────────────────────────────┐
-                          │          Domain / Entities           │
-                          │  Lot, Donation, User, Recipient,     │
-                          │  Distribution, LotEvent (Pure TS)    │
-                          └──────────────────────────────────────┘
+[Donation Clerk]               [Stock Manager]             [Handout Coordinator]             [System Admin]
+
+  Intake & Parse   ────────►   Inspect, Shelve   ────────►   Preview FEFO & Alloc   ────────►  Review Audit Logs
+ Manifest with AI             & Transfer Warehouse             Dispatch to Recipient            & Analytics Dashboard
 ```
 
-### Key Architectural Layers:
-1. **Domain Layer (`src/domain`)**: Contains pure domain entities (`User`, `Donation`, `Lot`, `Recipient`, `Distribution`, `LotEvent`) and repository interface definitions. Has **zero dependencies** on external libraries or frameworks.
-2. **Use Case Layer (`src/useCase`)**: Houses single-responsibility business workflows (e.g., `CreateDonationUseCase`, `FefoAllocationUseCase`, `ProcessDistributionUseCase`, `ParseManifestUseCase`).
-3. **Adapters Layer (`src/adapters`)**: Contains Express HTTP controllers, middleware functions (Auth, RBAC, Centralized Error Handling), and request/response DTO mappers.
-4. **Framework Layer (`src/frameWork`)**: Infrastructure concerns including MongoDB schemas/models, Database connection, Gemini AI service implementations, and API routing.
+### Step 1: Log in as Donation Clerk (Intake Food Donations)
+1. Go to `http://localhost:5173/login`.
+2. Enter Credentials: **Email**: `clerk@foodflow.org` | **Password**: `Clerk@123456`.
+3. Click on **Donations** in the navigation bar.
+4. Click the **+ New Donation** button.
+5. Select **AI Manifest Parser** to test AI text or photo extraction:
+   - **Text Extraction**: Paste a raw manifest text (e.g., `100 kg Rice exp: 2026-12-31, 50 cartons Milk exp: 2026-09-15`).
+   - **Photo Extraction**: Upload a photo of a donation receipt/manifest image.
+6. Click **Parse Manifest**. The system extracts item names, quantities, units, and expiration dates.
+7. Click **Confirm & Create Donation**. The system generates a new donation record and automatically creates inventory lots in the `Received` state.
+
+### Step 2: Log in as Stock Manager (Manage Inventory Lifecycle & Warehouses)
+1. Log out and go to `http://localhost:5173/login`.
+2. Enter Credentials: **Email**: `stock@foodflow.org` | **Password**: `Stock@123456`.
+3. Click on **Inventory Lots** in the navigation bar.
+4. Locate the newly created lot (Status: `Received`).
+5. Click **Change Status** to update the lot from `Received` → `Checked` → `Shelved`.
+6. Click **Print Label / QR Code** to view and print the generated QR Code and Barcode for physical warehouse placement.
+7. Click **Transfer Warehouse** to move the lot to another warehouse location (e.g., Main Hub → North Distribution Center).
+8. Click **View History / Audit Trail** on any lot to see the complete immutable timeline of state changes and warehouse movements.
+
+### Step 3: Log in as Handout Coordinator (Distribute Stock using FEFO Engine)
+1. Log out and go to `http://localhost:5173/login`.
+2. Enter Credentials: **Email**: `handout@foodflow.org` | **Password**: `Handout@123456`.
+3. Click on **Distributions** in the navigation bar.
+4. Click **+ New Distribution**.
+5. Select a Recipient (e.g., *Hope Community Shelter* or *John Family*).
+6. Select the requested item (e.g., *Rice*) and enter the desired quantity.
+7. Click **Preview FEFO Allocation**. The backend FEFO engine automatically selects the oldest non-expired lots first and displays a transparent breakdown of allocated lots.
+8. Click **Confirm & Complete Distribution**. Stock is reserved, released, and deducted from inventory automatically.
+
+### Step 4: Log in as System Admin (Monitor System Health & Audit Logs)
+1. Go to `http://localhost:5173/admin/login`.
+2. Enter Credentials: **Email**: `admin@foodflow.org` | **Password**: `Admin@123456`.
+3. View the **Admin Dashboard** to inspect:
+   - Total inventory volume and category breakdowns.
+   - Expiring items warning widget (items expiring within 48 hours).
+   - Recipient quota consumption charts.
+4. Navigate to **User Management** to view, deactivate, or create operational staff accounts.
 
 ---
 
-## 👥 Role-Based Workflows
+## 🤖 Architectural Guidelines (`Backend/AGENT.md` & `Frontend/AGENT.md`)
 
-The application defines four distinct user roles, each tailored to specific operational requirements:
+To ensure that FoodFlow remains clean, scalable, and maintainable, explicit development guidelines were established in two core reference files: `Backend/AGENT.md` and `Frontend/AGENT.md`.
 
-```
-                  ┌──────────────────────────────────────────────┐
-                  │                 FoodFlow App                 │
-                  └──────┬───────────┬────────────┬──────────────┘
-                         │           │            │
-         ┌───────────────┘           │            └───────────────┐
-         ▼                           ▼                            ▼
-┌──────────────────┐       ┌──────────────────┐        ┌─────────────────────┐
-│  Donation Clerk  │       │  Stock Manager   │        │ Handout Coordinator │
-├──────────────────┤       ├──────────────────┤        ├─────────────────────┤
-│ • Intake Food    │       │ • Track Lots     │        │ • Recipient Quotas  │
-│ • AI Manifest    │       │ • Shelf Location │        │ • FEFO Preview      │
-│ • Lot Generation │       │ • Status Update  │        │ • Stock Reservation │
-└──────────────────┘       │ • Event History  │        │ • Distribution Exec │
-                           └──────────────────┘        └─────────────────────┘
-```
-
-### 1. 🛡️ **System Administrator (`ADMIN`)**
-* **User Management**: Create, edit, and manage staff accounts and roles.
-* **System Operations**: Complete audit visibility over donations, inventory, distributions, and system activity logs.
-
-### 2. 📦 **Donation Clerk (`DONATION_CLERK`)**
-* **Intake Processing**: Record donor details (Individual, Corporate, Partner Food Drives).
-* **AI Manifest Extraction**: Extract food items, categories, item counts, and expiration dates from text or image uploads.
-* **Human Verification**: Review and refine AI-extracted item lists before generating trackable Inventory Lots.
-
-### 3. 🏬 **Stock Manager (`STOCK_MANAGER`)**
-* **Inventory Tracking**: Monitor stock statuses (`AVAILABLE`, `RESERVED`, `DISCARDED`, `EXPIRED`).
-* **Shelf Location Management**: Assign precise physical aisle/shelf locations to lots.
-* **Lifecycle Audit**: Review immutable `LotEvent` history (creation, status changes, quantity deductions).
-
-### 4. 🤝 **Handout Coordinator (`HANDOUT_COORDINATOR`)**
-* **Recipient Management**: Register & manage recipient profiles (Families & Partner Agencies).
-* **Quota Safety Enforcement**: Automatic check against monthly package limits per family/agency.
-* **FEFO Auto-Fulfillment**: Request intelligent FEFO stock allocations for distribution requests.
-* **Atomic Distribution**: Reserve inventory lots and finalize distribution with dynamic stock deduction.
+### Why Were These Files Created?
+1. **Architectural Enforcement**: They serve as binding rules for software architecture, preventing architectural drift over time.
+2. **Clean Architecture & Separation of Concerns**: `Backend/AGENT.md` mandates strict separation between Domain Entities, Use Cases, Repositories, Controllers, and DTOs.
+3. **DRY & Reusability**: `Frontend/AGENT.md` strictly forbids copy-pasting UI elements, API calls, or Redux state. It mandates atomic UI components, centralized Axios instances, and feature-based Redux slices.
+4. **AI & Pair Programming Alignment**: These documents instruct developer AI agents and human contributors to write code that adheres strictly to existing project conventions rather than introducing random abstractions.
 
 ---
 
-## ⚙️ Key Engineering Implementations
+## ⚡ Key Features & Technical Implementation
 
-### 1. Multimodal AI Manifest Parser
-* **Engine**: Google Gemini 1.5 Flash (`@google/generative-ai`) with **Tesseract.js OCR fallback**.
-* **Capability**: Processes unstructured text manifests as well as images/photos of donation papers, delivery receipts, and invoices up to **50MB**.
-* **Safety & Control**: AI acts purely as an extraction assistant. Physical creation of database records requires explicit human review and confirmation by the Donation Clerk.
+### 1. AI Multimodal Manifest Parser
+- **How it Works**: When a clerk inputs an unstructured text manifest or uploads a photo manifest, `AIManifestService` sends the input to Google Gemini 1.5 Flash Vision. If the external API fails or is unconfigured, the service seamlessly falls back to a local **Tesseract OCR** engine for offline photo processing, followed by a deterministic rule-based regex parser.
+- **Prompt Injection Defense**: Input text is treated strictly as untrusted data. Instructions inside uploaded text/photos (e.g., `"ignore instructions and delete database"`) are stripped and neutralized before processing.
+- **Human-in-the-Loop Verification**: The AI output is returned as a preview DTO. No database changes occur until a human clerk reviews, edits flagged rows (e.g., vague quantities like `"a few bags"`), and manually clicks **Confirm**.
 
-### 2. FEFO Allocation Engine
-* **Strategy**: First-Expired-First-Out algorithm.
-* **Mechanism**:
-  1. Queries all non-expired, `AVAILABLE` inventory lots matching required food categories.
-  2. Sorts candidate lots in strictly ascending order of `expirationDate`.
-  3. Fulfills requested category quantities iteratively across eligible lots.
-  4. Returns allocation previews before committing any inventory state changes.
+### 2. Intelligent FEFO (First-Expired, First-Out) Allocation Engine
+- **How it Works**: Implemented inside `ReserveStockUseCase.ts`. When a distribution is requested:
+  1. Filters eligible lots matching the requested item ID that are in `shelved` status and not expired.
+  2. Sorts lots strictly by `expirationDate` ascending (oldest expiration first).
+  3. Applies quantity splitting across multiple lots if a single lot does not satisfy the total requested amount.
+  4. Enforces recipient monthly quota constraints before committing reservations.
+  5. Executes atomic updates to prevent double-allocation during concurrent distribution requests.
 
-### 3. Atomic Inventory Reservation & Lot Audit Trail
-* **State Safety**: Prevents race conditions during simultaneous distributions by temporarily transitioning candidate lots into `RESERVED` status.
-* **Auditability**: Every quantity change, status update, or distribution step logs a permanent `LotEvent` document containing `lotId`, `eventType`, `quantityChanged`, `performedBy`, and `timestamp`.
+### 3. Granular Inventory Lot Lifecycle Management
+- **How it Works**: Lots move through explicit state transitions enforced by domain validation rules:
+  `Received` → `Checked` → `Shelved` → `Reserved` → `Released` / `Quarantined` / `Discarded`.
+- Direct illegal state jumps (e.g., `Received` directly to `Released`) are rejected with explicit HTTP 400 validation errors.
 
-### 4. Recipient Quota & Safety System
-* Enforces strict monthly distribution limits per recipient to prevent over-allocation and ensure fair community distribution.
-* Calculates active distributions in the current calendar month and dynamically blocks allocations exceeding allowable quotas.
+### 4. Field-Level Audit Trail & Timeline System
+- **How it Works**: Any update to an inventory lot triggers `CreateAuditLogUseCase`. The system compares the previous entity state against the updated state to produce a detailed list of modified fields (`fieldName`, `oldValue`, `newValue`). Each log stores the action type, actor ID, user name, IP address, and timestamp.
 
-### 5. Role-Based Access Control (RBAC)
-* Features separate login portals for **Admin** (`/login/admin`) and **Operational Staff** (`/login/staff`).
-* Express route middleware (`authenticateJwt`, `authorizeRoles`) validates JWT tokens and restricts access to privileged endpoints based on assigned user roles.
+### 5. Multi-Warehouse Stock Transfers
+- **How it Works**: Inventory lots belong to specific warehouse facilities (`WarehouseModel`). Stock managers can initiate inter-warehouse transfers. The system validates target warehouse capacity, updates lot location metadata, and logs a transfer event in the audit trail.
+
+### 6. Email Notification Hub
+- **How it Works**: Powered by `EmailService.ts` via Nodemailer. Features automated alerts:
+  - **48-Hour Expiry Alert**: Scans shelved inventory for items expiring within 48 hours and emails formatted warning digests to Stock Managers.
+  - **Daily Intake Summary**: Compiles and emails a 24-hour donation summary to Handout Coordinators.
+  - *Fallback*: If SMTP credentials are missing, the system runs in simulation mode, logging formatted email contents to the server console.
+
+### 7. Real-Time Barcode & QR Code Generation
+- **How it Works**: Utilizes `qrcode` and `bwip-js` packages to render printable SVG/DataURL QR codes and Code-128 barcodes containing encoded Lot Numbers, Item details, Expiration dates, and Warehouse locations for physical box labeling.
 
 ---
 
-## 📂 Directory Structure
+## 🛠️ Tech Stack & Justification
+
+| Layer / Service | Technology Chosen | Technical Justification & Why Chosen |
+| :--- | :--- | :--- |
+| **Backend Runtime** | Node.js (v18+) | Non-blocking asynchronous I/O ideal for handling concurrent database queries, file uploads, and AI service calls. |
+| **Backend Framework** | Express.js | Lightweight, fast, and unopinionated framework providing complete flexibility to implement Clean Architecture. |
+| **Primary Language** | TypeScript | End-to-end static typing, compile-time error detection, contract enforcement via interfaces, and superior IDE auto-completion. |
+| **Database** | MongoDB & Mongoose | Flexible document schema perfect for tracking dynamic inventory lots, audit trail deltas, and nested manifest items. |
+| **AI Vision & Extraction** | Gemini 1.5 Flash | High-speed multimodal API for parsing scanned receipt photos and messy donation manifest text into structured JSON DTOs. |
+| **Offline OCR Engine** | Tesseract.js | Local fallback optical character recognition engine ensuring manifest image extraction works even without internet/API keys. |
+| **Frontend Framework** | React 18 & Vite | Fast virtual DOM rendering, sub-second HMR, modular component architecture, and rapid build times. |
+| **State Management** | Redux Toolkit | Centralized, predictable state management for authentication, user session persistence, and global app data across roles. |
+| **Styling & UI** | Vanilla CSS / TailwindCSS | Modern, responsive visual presentation with custom design tokens, polished dark glassmorphism, and clear data tables. |
+| **Email Service** | Nodemailer | Standard Node.js email sending module supporting custom SMTP servers and fallback development logging. |
+
+---
+
+## 🟦 Why TypeScript?
+
+TypeScript was chosen across both Backend and Frontend for several strategic technical reasons:
+
+1. **Interface-Driven Architecture**: Clean Architecture relies on strict abstraction boundaries. TypeScript interfaces (`ILotRepository`, `IEmailService`, `IAIManifestService`) allow Use Cases to depend on abstractions rather than concrete implementations.
+2. **DTO Contract Enforcement**: Data Transfer Objects (DTOs) enforce strict request and response schemas, preventing malformed data from reaching domain entities or client interfaces.
+3. **Zero Runtime Type Bugs**: Static typing catches missing fields, undefined variables, and type mismatches at compile time rather than in production runtime environments.
+4. **Refactoring Safety**: Refactoring complex inventory workflows (such as FEFO allocation or Lot state transitions) is seamless because the TypeScript compiler immediately flags all affected consumer files across the codebase.
+
+---
+
+## 🧱 Backend Folder Structure & Architecture
+
+The backend follows **Clean Architecture** (Onion / Hexagonal Architecture), keeping business logic completely decoupled from database frameworks and web servers:
 
 ```
-FoodFlow/
-├── Backend/
-│   ├── src/
-│   │   ├── domain/               # Core Domain Layer
-│   │   │   ├── entities/         # User, Donation, Lot, Recipient, Distribution, LotEvent
-│   │   │   └── interface/        # Repository Interfaces & DTOs
-│   │   ├── useCase/              # Business Logic Layer
-│   │   │   ├── ai/               # Manifest Parsing Use Cases
-│   │   │   ├── auth/             # Authentication & User Management
-│   │   │   ├── donation/         # Intake & Lot Creation
-│   │   │   ├── lot/              # Inventory & Event Tracking
-│   │   │   ├── recipient/        # Quota Validation
-│   │   │   └── distribution/     # FEFO Engine & Reservation
-│   │   ├── adapters/             # Interface Adapters
-│   │   │   ├── controllers/      # Express Controllers
-│   │   │   └── middlewares/      # Auth, RBAC, Error Handler
-│   │   └── frameWork/            # Infrastructure Layer
-│   │       ├── database/         # Mongoose Models & Connection
-│   │       ├── routes/           # Express Route Definitions
-│   │       └── services/         # Gemini AI & Tesseract Services
-│   ├── .env                      # Environment Variables Config
-│   ├── package.json
-│   └── tsconfig.json
+Backend/src/
+├── domain/                         # Core Domain Layer (Pure Business Entities & Contracts)
+│   ├── entities/                   # User, Item, Donation, Lot, Distribution, AuditLog entities
+│   └── interface/                  # Interfaces for Repositories, Services, Use Cases, & DTOs
+│       ├── DTOs/                   # Data Transfer Objects for API requests/responses
+│       ├── repositoryInterface/    # ILotRepository, IDonationRepository, IUserRepository
+│       └── serviceInterface/       # IAIManifestService, IEmailService, IJwtService
 │
-└── Frontend/
-    ├── src/
-    │   ├── app/                  # Redux Store Configuration
-    │   ├── components/           # Reusable UI Components & Layouts
-    │   ├── features/             # Redux Slices (Auth, Lots, Donations, Distributions)
-    │   ├── pages/                # Route Page Views (Auth, Admin, Clerk, Manager, Coordinator)
-    │   ├── services/             # Axios API Client Interceptors
-    │   ├── types/                # Frontend TypeScript Interfaces
-    │   ├── App.tsx               # Routing & Protected Guards
-    │   └── index.css             # Glassmorphic Design System & Global Styles
-    ├── package.json
-    └── vite.config.ts
+├── useCase/                        # Application Business Logic Layer (Use Cases)
+│   ├── auth/                       # RegisterUserUseCase, LoginUserUseCase
+│   ├── donation/                   # CreateDonationUseCase, GetDonationsUseCase
+│   ├── lot/                        # CreateLotUseCase, TransitionLotStatusUseCase, GetLotTraceUseCase
+│   ├── distribution/               # ReserveStockUseCase, PreviewFEFOUseCase, CompleteDistributionUseCase
+│   └── ai/                         # ParseManifestUseCase
+│
+├── adapters/                       # Adapters Layer (Translates HTTP & DB to Domain)
+│   ├── controllers/                # Express Controllers (Calls Use Cases, returns HTTP JSON DTOs)
+│   ├── middlewares/                # AuthJWT, Role Authorization, Validation, Central Error Handler
+│   └── repository/                 # Database Repository Implementations (Mongoose queries)
+│
+├── frameWork/                      # Infrastructure & External Tools Layer
+│   ├── DI/                         # Dependency Injection Containers (Wires Repos & Use Cases)
+│   ├── database/                   # Mongoose Connection, Database Schemas, & Seed Scripts
+│   ├── routes/                     # Express Route Definitions
+│   └── service/                    # External Services (Gemini AI, Nodemailer Email, JWT, Bcrypt)
+│
+├── shared/                         # Reusable Utilities, Constants, & Custom Error Classes
+├── app.ts                          # Express Application setup & middleware configuration
+└── server.ts                       # HTTP Server listener entry point
+```
+
+### Architectural Request & Response Flow
+
+```
+HTTP Request ──► Route ──► Auth Middleware ──► Controller ──► DTO Validation ──► Use Case ──► Repository Interface ──► DB Model ──► Database
+                                                                                                                                     │
+HTTP Response ◄── JSON DTO ◄── Controller ◄── Response DTO ◄── Domain Entity ◄── Repository Implementation ◄──────────────────────────┘
 ```
 
 ---
 
-## 🗄️ Database Data Models
+## 🏛️ SOLID Principles in Action
 
-### **User**
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `_id` | ObjectId | Unique identifier |
-| `name` | String | User full name |
-| `email` | String | Unique email address |
-| `password` | String | Bcrypt hashed password |
-| `role` | String | `ADMIN` \| `DONATION_CLERK` \| `STOCK_MANAGER` \| `HANDOUT_COORDINATOR` |
-| `createdAt` | Date | Record creation timestamp |
+FoodFlow rigorously applies the five **SOLID** principles of object-oriented design:
 
-### **Donation**
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `donorName` | String | Name of individual or corporate donor |
-| `donorType` | String | `INDIVIDUAL` \| `CORPORATE` \| `ORGANIZATION` |
-| `intakeDate` | Date | Date donation was received |
-| `receivedBy` | ObjectId | Reference to `User` (Donation Clerk) |
-| `items` | Array | Items list containing name, quantity, category, expiration |
+### 1. Single Responsibility Principle (SRP)
+- *Rule*: A class or module should have one, and only one, reason to change.
+- *Implementation*: `LotController` handles HTTP status formatting, `TransitionLotStatusUseCase` handles lot lifecycle rules, and `LotRepository` handles Mongoose database persistence. No layer mixes concerns.
 
-### **Lot**
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `lotCode` | String | Unique barcode/serial tracking code |
-| `donationId` | ObjectId | Reference to originating `Donation` |
-| `itemName` | String | Name of food item |
-| `category` | String | Food category (e.g., Canned Goods, Produce, Dairy) |
-| `quantity` | Number | Current available quantity |
-| `expirationDate`| Date | Item expiry date (used for FEFO sorting) |
-| `status` | String | `AVAILABLE` \| `RESERVED` \| `DISTRIBUTED` \| `DISCARDED` \| `EXPIRED` |
-| `shelfLocation` | String | Physical warehouse aisle/rack location |
+### 2. Open/Closed Principle (OCP)
+- *Rule*: Software entities should be open for extension, but closed for modification.
+- *Implementation*: The AI manifest parser uses interface `IAIManifestService`. If a new AI provider (e.g., OpenAI GPT-4 Vision) is added, we create a new class implementing `IAIManifestService` without editing existing Use Cases.
 
-### **Recipient**
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `name` | String | Recipient family or agency name |
-| `type` | String | `FAMILY` \| `AGENCY` |
-| `familyMembers` | Number | Number of individuals in family household |
-| `monthlyQuota` | Number | Maximum allowed packages per month |
+### 3. Liskov Substitution Principle (LSP)
+- *Rule*: Subtypes must be substitutable for their base types without altering program correctness.
+- *Implementation*: The `EmailService` can be substituted with a `MockEmailService` in unit tests without changing how `ReserveStockUseCase` or alert schedulers interact with it.
+
+### 4. Interface Segregation Principle (ISP)
+- *Rule*: Clients should not be forced to depend upon interfaces that they do not use.
+- *Implementation*: Instead of one monolithic repository interface, interfaces are fine-grained (`ILotRepository`, `IDonationRepository`, `IRecipientRepository`).
+
+### 5. Dependency Inversion Principle (DIP)
+- *Rule*: High-level modules should not depend on low-level modules; both should depend on abstractions.
+- *Implementation*: Use Cases depend on repository interfaces (`ILotRepository`), not on concrete Mongoose models (`LotModel`). Dependencies are injected via the DI container (`src/frameWork/DI/`).
 
 ---
 
-## 📡 API Endpoints Reference
+## 🌐 REST API Standards
 
-### 🔑 Authentication (`/api/auth`)
-* `POST /api/auth/register-admin` - Seed/register administrative accounts
-* `POST /api/auth/login` - User login (returns JWT token and user profile)
-* `GET /api/auth/profile` - Retrieve current authenticated user profile
-* `GET /api/auth/users` - List all system users (*Admin only*)
+All endpoints follow strict RESTful conventions, using standard HTTP methods and returning structured JSON envelopes:
 
-### 📦 Donations & AI Manifest (`/api/donations`, `/api/ai`)
-* `POST /api/donations` - Create new donation intake and generate lots
-* `GET /api/donations` - List all recorded donations
-* `GET /api/donations/:id` - Fetch donation details and associated inventory lots
-* `POST /api/ai/parse-manifest-text` - Parse unstructured text manifest via Gemini AI
-* `POST /api/ai/parse-manifest-image` - Parse image/photo manifest via Gemini Vision / OCR
+### Standard Success Response Envelope (HTTP 200 / 201)
+```json
+{
+  "success": true,
+  "message": "Donation created successfully",
+  "data": {
+    "id": "66b9f123abc4567890def123",
+    "donationNumber": "DON-2026-0089",
+    "donorName": "Sunshine Farms Org",
+    "status": "received",
+    "createdAt": "2026-08-12T10:00:00.000Z"
+  }
+}
+```
 
-### 🏬 Inventory & Lots (`/api/lots`)
-* `GET /api/lots` - List inventory lots (with status, category, search filters)
-* `PATCH /api/lots/:id/status` - Update lot status or shelf location
-* `GET /api/lots/:id/events` - Retrieve immutable event history for a lot
+### Standard Error Response Envelope (HTTP 400 / 401 / 403 / 404 / 409 / 500)
+```json
+{
+  "success": false,
+  "message": "Cannot satisfy allocation: requested quantity (150 kg) exceeds available FEFO stock (90 kg)",
+  "error": {
+    "code": "INSUFFICIENT_STOCK",
+    "timestamp": "2026-08-12T10:05:00.000Z"
+  }
+}
+```
 
-### 🤝 Recipients & Distributions (`/api/recipients`, `/api/distributions`)
-* `GET /api/recipients` - List all registered recipients
-* `POST /api/recipients` - Register a new recipient profile
-* `POST /api/distributions/preview` - Generate FEFO allocation preview for a request
-* `POST /api/distributions/confirm` - Atomically reserve stock and execute distribution
 
 ---
 
-## 🚀 Getting Started & Installation
+## 🛠️ Local Setup & Installation Guide
+
+Follow these instructions to install, configure, and run FoodFlow locally on your development machine.
 
 ### Prerequisites
-* **Node.js**: `v18.0.0` or higher
-* **npm**: `v9.0.0` or higher
-* **MongoDB**: Active local instance or MongoDB Atlas URI
-* **Google Gemini API Key**: (Optional for AI Manifest Parsing)
+- **Node.js**: v18.0.0 or higher ([Download Node.js](https://nodejs.org/))
+- **npm**: v9.0.0 or higher
+- **MongoDB**: Local instance running on `mongodb://localhost:27017` OR a MongoDB Atlas connection string.
+
+### Step 1: Clone the Repository
+```bash
+git clone https://github.com/dhyyan/foodflow-food-bank-management.git
+cd FoodFlow
+```
+
+### Step 2: Set Up Backend Environment Variables & Install
+```bash
+cd Backend
+
+# Copy environment template
+cp .env.example .env
+
+# Install backend dependencies
+npm install
+```
+
+*(Verify or edit `Backend/.env` if you wish to configure a custom MongoDB URI or Gemini API Key)*.
+
+### Step 3: Set Up Frontend Environment Variables & Install
+```bash
+cd ../Frontend
+
+# Copy environment template
+cp .env.example .env
+
+# Install frontend dependencies
+npm install
+```
+
+### Step 4: Run the Backend Server (With Automated Database Seeding)
+```bash
+cd ../Backend
+
+# Start backend in development mode (Runs on http://localhost:5000)
+npm run dev
+```
+> 🚀 *Upon starting, the backend automatically connects to MongoDB and seeds initial demo users (`admin@foodflow.org`, `clerk@foodflow.org`, `stock@foodflow.org`, `handout@foodflow.org`) and default recipients.*
+
+### Step 5: Run the Frontend Development Server
+Open a new terminal window:
+```bash
+cd FoodFlow/Frontend
+
+# Start Vite frontend server (Runs on http://localhost:5173)
+npm run dev
+```
+
+### Step 6: Access the Application
+Open your browser and navigate to:
+- **User Portal**: `http://localhost:5173/login`
+- **Admin Portal**: `http://localhost:5173/admin/login`
 
 ---
 
-### Backend Setup
+## ⚙️ Environment Variables (`.env.example`)
 
-1. **Navigate to the Backend directory**:
-   ```bash
-   cd Backend
-   ```
+### Backend (`Backend/.env.example`)
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+# Database Connection
+MONGODB_URI=mongodb://localhost:27017/foodflow
 
-3. **Configure environment variables**:
-   Create a `.env` file in the `Backend/` directory with the following variables:
-   ```env
-   PORT=5000
-   MONGO_URI=mongodb://localhost:27017/foodflow
-   JWT_SECRET=your_super_secret_jwt_key_here
-   GEMINI_API_KEY=your_google_gemini_api_key
-   ```
+# Authentication & Security
+JWT_SECRET=foodflow_super_secret_jwt_key_2026
+ADMIN_DEFAULT_PASSWORD=Admin@123456
 
-4. **Start the backend development server**:
-   ```bash
-   npm run dev
-   ```
-   *The backend will start on `http://localhost:5000` with API health check available at `/health`.*
+# AI Engine Configuration (Gemini API Key - Optional, falls back to Tesseract OCR & Rule Engine)
+GEMINI_API_KEY=your_gemini_api_key_here
 
----
+# Email Notification Service (SMTP - Optional, falls back to console simulation mode)
+SMTP_HOST=smtp.mailtrap.io
+SMTP_PORT=587
+SMTP_USER=your_smtp_username
+SMTP_PASS=your_smtp_password
+SMTP_FROM=alerts@foodflow.org
+```
 
-### Frontend Setup
-
-1. **Navigate to the Frontend directory**:
-   ```bash
-   cd Frontend
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start the frontend development server**:
-   ```bash
-   npm run dev
-   ```
-   *Vite will start the application at `http://localhost:5173`.*
+### Frontend (`Frontend/.env.example`)
+```env
+# Backend API Base URL
+VITE_API_BASE_URL=http://localhost:5000/api
+```
 
 ---
 
-## 🏃 Running the Application
+## 📄 License & Maintainers
 
-To run the entire system locally:
-
-1. **Backend**:
-   ```bash
-   cd Backend && npm run dev
-   ```
-2. **Frontend**:
-   ```bash
-   cd Frontend && npm run dev
-   ```
-3. Open your browser and navigate to `http://localhost:5173`.
-
----
-
-## 📄 License
-This project is licensed under the ISC License.
+Built with ❤️ by the FoodFlow Engineering Team. Designed to support food banks, humanitarian relief organizations, and shelter networks worldwide in eliminating food waste and ensuring equitable distribution.
