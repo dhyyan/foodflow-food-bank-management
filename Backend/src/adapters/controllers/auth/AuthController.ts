@@ -3,12 +3,14 @@ import { AuthenticatedRequest } from '../../middlewares/auth/jwtMiddleware';
 import { IRegisterUserUseCase } from '../../../domain/interface/useCaseInterface/IRegisterUserUseCase';
 import { ILoginUserUseCase } from '../../../domain/interface/useCaseInterface/ILoginUserUseCase';
 import { IGetUsersUseCase } from '../../../domain/interface/useCaseInterface/IGetUsersUseCase';
+import { IToggleUserStatusUseCase } from '../../../domain/interface/useCaseInterface/IToggleUserStatusUseCase';
 
 export class AuthController {
   constructor(
     private readonly registerUserUseCase: IRegisterUserUseCase,
     private readonly loginUserUseCase: ILoginUserUseCase,
-    private readonly getUsersUseCase: IGetUsersUseCase
+    private readonly getUsersUseCase: IGetUsersUseCase,
+    private readonly toggleUserStatusUseCase?: IToggleUserStatusUseCase
   ) {}
 
   register = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -57,6 +59,32 @@ export class AuthController {
         success: true,
         message: 'Users retrieved successfully',
         data: users
+      });
+    } catch (error) {
+      return next(error);
+    }
+  };
+
+  toggleStatus = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const { isActive } = req.body;
+      const adminId = req.user?.id;
+
+      if (!this.toggleUserStatusUseCase) {
+        throw new Error('ToggleUserStatusUseCase is not injected');
+      }
+
+      const result = await this.toggleUserStatusUseCase.execute({
+        userId: id,
+        isActive: Boolean(isActive),
+        adminId
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: `User account '${result.name}' has been ${result.isActive ? 'unblocked (activated)' : 'blocked (deactivated)'}`,
+        data: result
       });
     } catch (error) {
       return next(error);

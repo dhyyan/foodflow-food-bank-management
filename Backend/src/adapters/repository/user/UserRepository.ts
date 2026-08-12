@@ -47,4 +47,15 @@ export class UserRepository implements IUserRepository {
     const docs = await UserModel.find().sort({ createdAt: -1 });
     return docs.map((doc) => this.mapDocumentToEntity(doc));
   }
+
+  async updateStatus(id: string, isActive: boolean): Promise<User | null> {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const updatedDoc = await UserModel.findByIdAndUpdate(
+      id,
+      { isActive },
+      { new: true }
+    );
+    if (!updatedDoc) return null;
+    return this.mapDocumentToEntity(updatedDoc);
+  }
 }

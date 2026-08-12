@@ -5,4 +5,5 @@ export interface IUserRepository {
   findById(id: string): Promise<User | null>;
   create(user: User): Promise<User>;
   findAll(): Promise<User[]>;
+  updateStatus(id: string, isActive: boolean): Promise<User | null>;
 }

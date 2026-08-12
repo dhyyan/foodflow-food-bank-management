@@ -303,13 +303,13 @@ export const LotsPage: React.FC = () => {
             <History size={14} style={{ color: '#16a34a' }} />
           </button>
 
-          {/* Printable Barcode / QR Label Tag Button */}
+          {/* Printable Barcode Label Tag Button */}
           <button
             onClick={() => {
               setActiveModalLot(item);
               setIsQROpen(true);
             }}
-            title="Generate & Print QR Label Tag"
+            title="Generate & Print Barcode Label"
             style={{
               padding: '0.35rem 0.5rem',
               borderRadius: 'var(--radius-sm)',

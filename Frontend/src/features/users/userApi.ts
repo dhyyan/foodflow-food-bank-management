@@ -11,5 +11,10 @@ export const userApi = {
   registerUser: async (userData: RegisterUserDto): Promise<ApiResponse<{ user: User }>> => {
     const response = await apiClient.post<ApiResponse<{ user: User }>>('/auth/register', userData);
     return response.data;
+  },
+
+  toggleUserStatus: async (userId: string, isActive: boolean): Promise<ApiResponse<User>> => {
+    const response = await apiClient.patch<ApiResponse<User>>(`/auth/users/${userId}/status`, { isActive });
+    return response.data;
   }
 };

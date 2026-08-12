@@ -62,6 +62,25 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+export const toggleUserStatus = createAsyncThunk(
+  'users/toggleUserStatus',
+  async ({ userId, isActive }: { userId: string; isActive: boolean }, { rejectWithValue }) => {
+    try {
+      const res = await userApi.toggleUserStatus(userId, isActive);
+      if (res.success && res.data) {
+        const rawData = res.data as any;
+        return {
+          id: rawData.id || rawData._id || userId,
+          isActive: rawData.isActive ?? isActive
+        };
+      }
+      return rejectWithValue(res.message || 'Status update failed');
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to update user status');
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: 'users',
   initialState,
@@ -105,6 +124,24 @@ const userSlice = createSlice({
       state.actionLoading = false;
       state.actionSuccess = false;
       state.error = (action.payload as string) || 'Error registering user';
+    });
+
+    // Toggle user status
+    builder.addCase(toggleUserStatus.pending, (state) => {
+      state.actionLoading = true;
+      state.error = null;
+    });
+    builder.addCase(toggleUserStatus.fulfilled, (state, action) => {
+      state.actionLoading = false;
+      state.error = null;
+      const targetUser = state.users.find((u) => u.id === action.payload.id);
+      if (targetUser) {
+        targetUser.isActive = action.payload.isActive;
+      }
+    });
+    builder.addCase(toggleUserStatus.rejected, (state, action) => {
+      state.actionLoading = false;
+      state.error = (action.payload as string) || 'Error updating user status';
     });
   }
 });
