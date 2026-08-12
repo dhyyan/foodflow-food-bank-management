@@ -19,13 +19,15 @@ export class DistributionController {
 
   public create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const user = (req as any).user || {};
       const creator = {
-        id: (req as any).user.id,
-        name: (req as any).user.name
+        id: user.id || user._id || 'unknown',
+        name: user.name || user.email || 'Handout Coordinator'
       };
 
       const dto: CreateDistributionDTO = {
         recipientId: req.body.recipientId,
+        recipientEmail: req.body.recipientEmail,
         items: req.body.items,
         notes: req.body.notes
       };

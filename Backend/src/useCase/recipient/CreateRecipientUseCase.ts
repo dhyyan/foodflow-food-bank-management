@@ -1,7 +1,7 @@
 import { IRecipientRepository } from '../../domain/interface/repositoryInterface/IRecipientRepository';
 import { Recipient } from '../../domain/entities/Recipient';
 import { CreateRecipientDTO, RecipientResponseDTO } from '../../domain/interface/DTOs/RecipientDTO';
-import { BadRequestError } from '../../shared/errors/AppError';
+import { BadRequestError, ConflictError } from '../../shared/errors/AppError';
 
 export class CreateRecipientUseCase {
   constructor(private readonly recipientRepository: IRecipientRepository) {}
@@ -12,6 +12,13 @@ export class CreateRecipientUseCase {
     }
     if (!dto.type || (dto.type !== 'family' && dto.type !== 'agency')) {
       throw new BadRequestError('Recipient type must be either family or agency');
+    }
+
+    if (dto.contactEmail && dto.contactEmail.trim()) {
+      const existing = await this.recipientRepository.findByEmail(dto.contactEmail.trim());
+      if (existing) {
+        throw new ConflictError(`A recipient family/agency with contact email '${dto.contactEmail.trim()}' already exists.`);
+      }
     }
 
     const recipient = new Recipient({

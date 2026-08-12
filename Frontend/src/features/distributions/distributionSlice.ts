@@ -3,6 +3,8 @@ import { distributionApi } from './distributionApi';
 import type {
   Recipient,
   RecipientType,
+  RecipientQuotaInfo,
+  CreateRecipientInput,
   DistributionRecord,
   CreateDistributionPayload,
   FEFOPreviewResponse,
@@ -12,11 +14,13 @@ import type {
 interface DistributionState {
   distributions: DistributionRecord[];
   recipients: Recipient[];
+  checkedQuota: RecipientQuotaInfo | null;
   total: number;
   selectedDistribution: DistributionRecord | null;
   activePreview: FEFOPreviewResponse | null;
   loading: boolean;
   recipientsLoading: boolean;
+  quotaLoading: boolean;
   previewLoading: boolean;
   actionLoading: boolean;
   error: string | null;
@@ -26,11 +30,13 @@ interface DistributionState {
 const initialState: DistributionState = {
   distributions: [],
   recipients: [],
+  checkedQuota: null,
   total: 0,
   selectedDistribution: null,
   activePreview: null,
   loading: false,
   recipientsLoading: false,
+  quotaLoading: false,
   previewLoading: false,
   actionLoading: false,
   error: null,
@@ -44,6 +50,33 @@ export const fetchRecipients = createAsyncThunk(
       return await distributionApi.getRecipients(type);
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch recipients');
+    }
+  }
+);
+
+export const checkRecipientQuota = createAsyncThunk(
+  'distributions/checkRecipientQuota',
+  async (email: string, { rejectWithValue }) => {
+    try {
+      return await distributionApi.checkRecipientQuota(email);
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to check recipient monthly quota');
+    }
+  }
+);
+
+export const createRecipient = createAsyncThunk(
+  'distributions/createRecipient',
+  async (data: CreateRecipientInput, { dispatch, rejectWithValue }) => {
+    try {
+      const recipient = await distributionApi.createRecipient(data);
+      dispatch(fetchRecipients());
+      if (recipient.contactEmail) {
+        dispatch(checkRecipientQuota(recipient.contactEmail));
+      }
+      return recipient;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to create recipient family/agency');
     }
   }
 );
@@ -131,6 +164,9 @@ export const distributionSlice = createSlice({
     clearActivePreview: (state) => {
       state.activePreview = null;
     },
+    clearCheckedQuota: (state) => {
+      state.checkedQuota = null;
+    },
     clearMessages: (state) => {
       state.error = null;
       state.successMessage = null;
@@ -147,6 +183,33 @@ export const distributionSlice = createSlice({
     });
     builder.addCase(fetchRecipients.rejected, (state) => {
       state.recipientsLoading = false;
+    });
+
+    // Check Recipient Quota
+    builder.addCase(checkRecipientQuota.pending, (state) => {
+      state.quotaLoading = true;
+    });
+    builder.addCase(checkRecipientQuota.fulfilled, (state, action: PayloadAction<RecipientQuotaInfo>) => {
+      state.quotaLoading = false;
+      state.checkedQuota = action.payload;
+    });
+    builder.addCase(checkRecipientQuota.rejected, (state) => {
+      state.quotaLoading = false;
+      state.checkedQuota = null;
+    });
+
+    // Create Recipient
+    builder.addCase(createRecipient.pending, (state) => {
+      state.actionLoading = true;
+      state.error = null;
+    });
+    builder.addCase(createRecipient.fulfilled, (state, action: PayloadAction<Recipient>) => {
+      state.actionLoading = false;
+      state.successMessage = `Recipient family/agency '${action.payload.name}' saved to database successfully!`;
+    });
+    builder.addCase(createRecipient.rejected, (state, action) => {
+      state.actionLoading = false;
+      state.error = action.payload as string;
     });
 
     // Distributions list
@@ -233,5 +296,5 @@ export const distributionSlice = createSlice({
   }
 });
 
-export const { setSelectedDistribution, clearActivePreview, clearMessages } = distributionSlice.actions;
+export const { setSelectedDistribution, clearActivePreview, clearCheckedQuota, clearMessages } = distributionSlice.actions;
 export default distributionSlice.reducer;

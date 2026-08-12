@@ -14,6 +14,24 @@ export interface Recipient {
   updatedAt: string;
 }
 
+export interface RecipientQuotaInfo {
+  exists: boolean;
+  recipient?: Recipient;
+  monthlyQuota: number;
+  usedThisMonth: number;
+  remainingQuota: number;
+  isQuotaCompleted: boolean;
+}
+
+export interface CreateRecipientInput {
+  name: string;
+  type: RecipientType;
+  monthlyQuota?: number;
+  contactPerson?: string;
+  contactEmail?: string;
+  address?: string;
+}
+
 export interface DistributionItem {
   itemName: string;
   requestedQuantity: number;

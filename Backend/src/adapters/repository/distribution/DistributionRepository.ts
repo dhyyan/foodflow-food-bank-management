@@ -110,17 +110,18 @@ export class DistributionRepository implements IDistributionRepository {
   }
 
   async sumMonthlyUnitsByRecipientId(recipientId: string, year: number, month: number): Promise<number> {
-    const startOfMonth = new Date(year, month - 1, 1, 0, 0, 0, 0);
-    const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+    const startOfMonth = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+    const endOfMonth = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
 
-    const matchRecipientId = mongoose.Types.ObjectId.isValid(recipientId)
-      ? new mongoose.Types.ObjectId(recipientId)
-      : recipientId;
+    const matchValues: any[] = [recipientId, recipientId.toString()];
+    if (mongoose.Types.ObjectId.isValid(recipientId)) {
+      matchValues.push(new mongoose.Types.ObjectId(recipientId));
+    }
 
     const result = await DistributionModel.aggregate([
       {
         $match: {
-          recipientId: matchRecipientId,
+          recipientId: { $in: matchValues },
           status: { $ne: 'cancelled' },
           createdAt: { $gte: startOfMonth, $lte: endOfMonth }
         }

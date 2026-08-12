@@ -36,8 +36,8 @@ export class ReserveStockUseCase {
 
     if (recipient.type === 'family') {
       const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getUTCFullYear();
+      const currentMonth = now.getUTCMonth() + 1;
 
       const alreadyReceived = await this.distributionRepository.sumMonthlyUnitsByRecipientId(
         recipient.id!,
