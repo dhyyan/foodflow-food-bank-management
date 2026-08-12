@@ -1,0 +1,106 @@
+name: Backend CI/CD Pipeline - EC2 Deployment
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'Backend/**'
+      - '.github/workflows/ci-cd-backend.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'Backend/**'
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    name: Test & Build Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'Backend/package-lock.json'
+
+      - name: Install Backend Dependencies
+        run: |
+          cd Backend
+          npm ci
+
+      - name: Compile TypeScript Code
+        run: |
+          cd Backend
+          npm run build
+
+      - name: Run Backend Unit Tests
+        run: |
+          cd Backend
+          npm test
+
+  deploy-to-ec2:
+    name: Deploy Backend to AWS EC2
+    needs: test-and-build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure SSH Private Key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Add EC2 Host Key to Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Sync Backend Files to EC2 Instance
+        run: |
+          TARGET_DIR="${{ secrets.EC2_TARGET_DIR }}"
+          if [ -z "$TARGET_DIR" ]; then
+            TARGET_DIR="/var/www/foodflow-backend"
+          fi
+
+          rsync -avz --delete \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            --exclude '.env' \
+            --exclude 'dist' \
+            Backend/ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:$TARGET_DIR
+
+      - name: Install Dependencies, Build TypeScript & Restart PM2 Process on EC2
+        run: |
+          TARGET_DIR="${{ secrets.EC2_TARGET_DIR }}"
+          if [ -z "$TARGET_DIR" ]; then
+            TARGET_DIR="/var/www/foodflow-backend"
+          fi
+
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+            set -e
+            echo 'Navigating to project directory: '$TARGET_DIR
+            cd $TARGET_DIR
+            
+            echo 'Installing dependencies...'
+            npm install
+            
+            echo 'Building TypeScript project...'
+            npm run build
+            
+            echo 'Pruning development dependencies...'
+            npm prune --production
+            
+            echo 'Restarting backend service with PM2...'
+            pm2 restart foodflow-backend || pm2 start dist/server.js --name foodflow-backend
+            pm2 save
+            
+            echo 'Deployment complete successfully!'
+          "
