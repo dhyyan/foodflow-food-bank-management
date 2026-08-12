@@ -1,5 +1,6 @@
-import { UserResponseDTO } from '../DTOs/UserDTO';
+import { UserFilterDTO, UserPaginatedResponseDTO } from '../DTOs/UserDTO';
 
 export interface IGetUsersUseCase {
-  execute(): Promise<UserResponseDTO[]>;
+  execute(filter?: UserFilterDTO): Promise<UserPaginatedResponseDTO>;
 }
+

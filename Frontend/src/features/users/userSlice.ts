@@ -1,9 +1,13 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import type { User, RegisterUserDto } from '../../types/user';
+import type { User, RegisterUserDto, UserFilterParams, UserPaginatedResponse } from '../../types/user';
 import { userApi } from './userApi';
 
 interface UserState {
   users: User[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
   loading: boolean;
   actionLoading: boolean;
   error: string | null;
@@ -12,6 +16,10 @@ interface UserState {
 
 const initialState: UserState = {
   users: [],
+  total: 0,
+  page: 1,
+  limit: 10,
+  totalPages: 1,
   loading: false,
   actionLoading: false,
   error: null,
@@ -20,16 +28,28 @@ const initialState: UserState = {
 
 export const fetchUsers = createAsyncThunk(
   'users/fetchUsers',
-  async (_, { rejectWithValue }) => {
+  async (params: UserFilterParams | undefined, { rejectWithValue }) => {
     try {
-      const res = await userApi.getUsers();
+      const res = await userApi.getUsers(params);
       const rawData = res.data as any;
       if (Array.isArray(rawData)) {
-        return rawData as User[];
+        return {
+          users: rawData as User[],
+          total: rawData.length,
+          page: 1,
+          limit: rawData.length || 10,
+          totalPages: 1
+        };
       } else if (rawData?.users && Array.isArray(rawData.users)) {
-        return rawData.users as User[];
+        return {
+          users: rawData.users as User[],
+          total: rawData.total ?? rawData.users.length,
+          page: rawData.page ?? 1,
+          limit: rawData.limit ?? 10,
+          totalPages: rawData.totalPages ?? 1
+        };
       }
-      return [];
+      return { users: [], total: 0, page: 1, limit: 10, totalPages: 1 };
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || err.message || 'Failed to load system users');
     }
@@ -97,14 +117,19 @@ const userSlice = createSlice({
       state.loading = true;
       state.error = null;
     });
-    builder.addCase(fetchUsers.fulfilled, (state, action: PayloadAction<User[]>) => {
+    builder.addCase(fetchUsers.fulfilled, (state, action) => {
       state.loading = false;
-      state.users = action.payload;
+      state.users = action.payload.users;
+      state.total = action.payload.total;
+      state.page = action.payload.page;
+      state.limit = action.payload.limit;
+      state.totalPages = action.payload.totalPages;
     });
     builder.addCase(fetchUsers.rejected, (state, action) => {
       state.loading = false;
       state.error = (action.payload as string) || 'Error fetching users';
     });
+
 
     // Register user
     builder.addCase(registerUser.pending, (state) => {

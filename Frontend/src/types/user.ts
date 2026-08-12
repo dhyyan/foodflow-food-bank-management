@@ -27,3 +27,19 @@ export interface AuthResponseData {
   user: User;
   token: string;
 }
+
+export interface UserFilterParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+}
+
+export interface UserPaginatedResponse {
+  users: User[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
