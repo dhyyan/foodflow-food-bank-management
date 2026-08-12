@@ -45,9 +45,9 @@ const initialState: DistributionState = {
 
 export const fetchRecipients = createAsyncThunk(
   'distributions/fetchRecipients',
-  async (type: RecipientType | undefined, { rejectWithValue }) => {
+  async (type: RecipientType | void, { rejectWithValue }) => {
     try {
-      return await distributionApi.getRecipients(type);
+      return await distributionApi.getRecipients(type || undefined);
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch recipients');
     }

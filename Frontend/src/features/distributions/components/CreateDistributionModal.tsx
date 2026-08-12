@@ -67,7 +67,7 @@ export const CreateDistributionModal: React.FC<CreateDistributionModalProps> = (
 
   useEffect(() => {
     if (isOpen) {
-      dispatch(fetchRecipients());
+      dispatch(fetchRecipients(undefined));
       dispatch(clearMessages());
       dispatch(clearCheckedQuota());
       setFormError(null);
