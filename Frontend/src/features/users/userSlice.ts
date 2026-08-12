@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import type { User, RegisterUserDto, UserFilterParams, UserPaginatedResponse } from '../../types/user';
+import type { User, RegisterUserDto, UserFilterParams } from '../../types/user';
 import { userApi } from './userApi';
 
 interface UserState {
