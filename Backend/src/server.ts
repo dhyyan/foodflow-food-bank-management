@@ -3,7 +3,7 @@ import { connectDB } from './frameWork/database/connection/db';
 import { seedInitialAdmin } from './frameWork/database/seed/seedAdmin';
 
 const PORT = process.env.PORT || 5000;
-
+console.log(process.env.GEMINI_API_KEY)
 const startServer = async () => {
   try {
     await connectDB();

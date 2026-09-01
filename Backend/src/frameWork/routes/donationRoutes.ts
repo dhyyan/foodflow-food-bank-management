@@ -6,7 +6,7 @@ import { UserRole } from '../../domain/entities/User';
 
 const router = Router();
 
-// Create new donation (Admin or Donation Clerk)
+// Create new donation (Donation Clerk)
 router.post(
   '/',
   jwtMiddleware,

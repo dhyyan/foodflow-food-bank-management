@@ -28,9 +28,9 @@ const initialState: UserState = {
 
 export const fetchUsers = createAsyncThunk(
   'users/fetchUsers',
-  async (params: UserFilterParams | undefined, { rejectWithValue }) => {
+  async (params: UserFilterParams | void, { rejectWithValue }) => {
     try {
-      const res = await userApi.getUsers(params);
+      const res = await userApi.getUsers(params || undefined);
       const rawData = res.data as any;
       if (Array.isArray(rawData)) {
         return {

@@ -7,6 +7,7 @@ export class AIManifestService implements IAIManifestService {
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    console.log("api key from gemini",apiKey)
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
     }

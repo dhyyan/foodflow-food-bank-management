@@ -1,6 +1,7 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express, { Application } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import authRoutes from './frameWork/routes/authRoutes';
 import donationRoutes from './frameWork/routes/donationRoutes';
 import lotRoutes from './frameWork/routes/lotRoutes';
@@ -13,7 +14,6 @@ import warehouseRoutes from './frameWork/routes/warehouseRoutes';
 import auditRoutes from './frameWork/routes/auditRoutes';
 import { errorHandler } from './adapters/middlewares/error/errorMiddleware';
 
-dotenv.config();
 
 const app: Application = express();
 

@@ -53,9 +53,9 @@ const initialState: LotState = {
 
 export const fetchLots = createAsyncThunk(
   'lots/fetchLots',
-  async (params: LotFilterParams | undefined, { rejectWithValue }) => {
+  async (params: LotFilterParams | void, { rejectWithValue }) => {
     try {
-      return await lotApi.getLots(params);
+      return await lotApi.getLots(params || undefined);
     } catch (err: any) {
       return rejectWithValue(err.message || 'Failed to fetch lots');
     }

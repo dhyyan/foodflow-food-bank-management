@@ -83,9 +83,9 @@ export const createRecipient = createAsyncThunk(
 
 export const fetchDistributions = createAsyncThunk(
   'distributions/fetchDistributions',
-  async (params: DistributionFilterParams | undefined, { rejectWithValue }) => {
+  async (params: DistributionFilterParams | void, { rejectWithValue }) => {
     try {
-      return await distributionApi.getDistributions(params);
+      return await distributionApi.getDistributions(params || undefined);
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch distributions');
     }
