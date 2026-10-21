@@ -27,6 +27,8 @@ export class CompleteDistributionUseCase {
       );
     }
 
+
+
     // Retrieve active reservations for this distribution
     const reservations = await this.reservationRepository.findByDistributionId(distribution.id!);
     const lotEvents: LotEvent[] = [];
